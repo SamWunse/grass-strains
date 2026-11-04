@@ -112,6 +112,17 @@ select.big{appearance:none;-webkit-appearance:none;padding-right:44px;
 .board .nm{flex:1;font-weight:600}
 .board .break{font-size:.8rem;color:var(--muted);font-weight:400}
 .board .pts{font-size:1.5rem}
+/* Expandable vote rows (admin): tap a player to see who voted for them */
+.board li.x{display:block;padding:0}
+.board details summary{display:flex;align-items:center;gap:12px;padding:11px 2px;cursor:pointer;list-style:none}
+.board details summary::-webkit-details-marker{display:none}
+.board details summary .chev{color:var(--muted);transition:transform .15s;font-size:.9rem}
+.board details[open] summary .chev{transform:rotate(90deg)}
+.voters{list-style:none;margin:0 0 10px 2.4em;padding:0}
+.voters li{display:flex !important;gap:10px;padding:5px 0 !important;border:0 !important;background:none !important;font-size:.92rem}
+.voters .vv{font-family:"Graduate",serif;min-width:1.2em}
+.voters .vv.v3{color:var(--gold)} .voters .vv.v2{color:var(--silver)} .voters .vv.v1{color:var(--bronze)}
+.voters .rd{margin-left:auto;color:var(--muted);font-size:.82rem;text-align:right}
 
 /* Admin */
 .match-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
@@ -316,7 +327,7 @@ async function renderVote(reload = true) {
 
     <div class="actions">
     <button class="btn" id="submit" ${ready ? "" : "disabled"}>Submit</button>
-    <p class="note">${st.voter ? "Votes are shown only as team totals. No one can see who you voted for." : "Select your name to submit."}</p>
+    <p class="note">${st.voter ? "Teammates only see totals. Only the admin can see who you voted for." : "Select your name to submit."}</p>
     </div>
   `;
 
@@ -371,6 +382,8 @@ async function renderResults() {
   const matches = d.matches.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
   const m = matches.find(x => x.id === st.resultsFor);
 
+  const nameOf = id => d.players.find(p => p.id === id)?.name || id;
+  const roundOf = id => matches.find(x => x.id === id)?.title || "";
   const votes = d.players.map(p => ({ p, ...d.tally[p.id] })).filter(r => r.pts > 0)
     .sort((a, b) => b.pts - a.pts || b.c3 - a.c3 || b.c2 - a.c2);
   const goals = d.players.map(p => ({ p, g: d.goals[p.id] })).filter(r => r.g > 0).sort((a, b) => b.g - a.g);
@@ -395,10 +408,15 @@ async function renderResults() {
     <h2>Votes</h2>
     ${!votes.length ? `<p class="note">No votes yet.</p>` : `
       <p class="note">${d.ballots} ballot${d.ballots === 1 ? "" : "s"} counted</p>
-      <ol class="board">${votes.map((r, i) => `
-        <li><span class="rank">${i + 1}</span>
+      <p class="note">Tap a player to see who voted for them.</p>
+      <ol class="board">${votes.map((r, i) => {
+        const by = (d.votedBy?.[r.p.id] || []).slice().sort((a, b) => b.v - a.v || nameOf(a.voter).localeCompare(nameOf(b.voter)));
+        return `<li class="x"><details><summary><span class="rank">${i + 1}</span>
           <span class="nm">${esc(r.p.name)}<br><span class="break">${r.c3}×3, ${r.c2}×2, ${r.c1}×1</span></span>
-          <span class="pts">${r.pts}</span></li>`).join("")}</ol>`}
+          <span class="pts">${r.pts}</span><span class="chev" aria-hidden="true">▶</span></summary>
+          <ul class="voters">${by.map(x => `<li><span class="vv v${x.v}">${x.v}</span><span>${esc(nameOf(x.voter))}</span>${!m ? `<span class="rd">${esc(roundOf(x.match))}</span>` : ""}</li>`).join("")}</ul>
+        </details></li>`;
+      }).join("")}</ol>`}
 
     <h2>Goals</h2>
     ${!goals.length ? `<p class="note">No goals logged yet.</p>` : `

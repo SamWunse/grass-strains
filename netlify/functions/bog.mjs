@@ -39,7 +39,7 @@ const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 
 async function getSubs(s, matchId) {
   const { blobs } = await s.list({ prefix: `sub/${matchId}/` });
   const rows = await Promise.all(blobs.map(b => s.get(b.key, { type: "json" })));
-  return rows.filter(Boolean);
+  return rows.filter(Boolean).map(r => ({ ...r, match: matchId }));
 }
 
 export default async (req) => {
@@ -95,14 +95,18 @@ export default async (req) => {
     const tally = {};
     const goals = {};
     for (const p of PLAYERS) { tally[p.id] = { pts: 0, c3: 0, c2: 0, c1: 0 }; goals[p.id] = 0; }
+    const votedBy = {};
+    for (const p of PLAYERS) votedBy[p.id] = [];
     for (const x of subs) {
       if (tally[x.v3]) { tally[x.v3].pts += 3; tally[x.v3].c3++; }
       if (tally[x.v2]) { tally[x.v2].pts += 2; tally[x.v2].c2++; }
       if (tally[x.v1]) { tally[x.v1].pts += 1; tally[x.v1].c1++; }
+      for (const v of [3, 2, 1]) if (votedBy[x["v" + v]]) votedBy[x["v" + v]].push({ voter: x.voter, v, match: x.match });
       if (goals[x.voter] !== undefined) goals[x.voter] += x.goals || 0;
     }
-    // Only totals and who has submitted are returned. Individual ballots never leave the server.
+    // Admin only (PIN checked above): totals plus who gave each player their votes.
     return json({
+      votedBy,
       players: PLAYERS,
       matches,
       ballots: subs.length,
