@@ -38,7 +38,7 @@ body{
   background:var(--bg);color:var(--ink);
   padding-bottom:calc(76px + env(safe-area-inset-bottom));
 }
-h1,h2,.num,.slot-val,.tab,.pts,.rank,.goals-val{font-family:"Graduate","Barlow",serif;font-weight:400}
+h1,h2,.tab,.pts,.rank{font-family:"Graduate","Barlow",serif;font-weight:400}
 
 /* Crest header: the crest sits on the navy band and breaks over its bottom edge */
 header{
@@ -74,34 +74,17 @@ button{font:inherit;cursor:pointer}
 .msg.err{border-color:var(--danger);color:var(--danger)}
 .msg.ok{border-color:var(--grass);border-left-width:6px}
 
-/* Goals stepper */
-.stepper{display:flex;align-items:stretch;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
-.stepper button{width:64px;border:0;background:none;color:var(--ink);font-size:1.8rem;font-weight:600}
-.stepper button:disabled{opacity:.3}
-.goals-val{flex:1;text-align:center;font-size:2.3rem;padding:6px 0 2px;border-left:1.5px solid var(--line);border-right:1.5px solid var(--line)}
-
-/* Vote slots */
-.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:8px 0 14px}
-.slot{
-  border:2px dashed var(--line);border-radius:14px;background:transparent;color:var(--ink);
-  padding:12px 6px;text-align:center;min-height:116px;display:flex;flex-direction:column;
-  align-items:center;gap:6px;transition:border-color .15s, background .15s;
-}
-.slot-val{font-size:2.9rem;line-height:1;color:var(--muted)}
-.slot .who{font-size:.85rem;font-weight:600;line-height:1.2}
-.slot .hint{font-size:.78rem;color:var(--muted)}
-.slot.active{border-style:solid;border-color:var(--grass)}
-.slot.filled{border-style:solid;background:var(--surface)}
-.slot[data-v="3"].filled{border-color:var(--gold)} .slot[data-v="3"].filled .slot-val{color:var(--gold)}
-.slot[data-v="2"].filled{border-color:var(--silver)} .slot[data-v="2"].filled .slot-val{color:var(--silver)}
-.slot[data-v="1"].filled{border-color:var(--bronze)} .slot[data-v="1"].filled .slot-val{color:var(--bronze)}
-
-.players{list-style:none;margin:0 0 18px;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.player{width:100%;display:flex;align-items:center;gap:10px;text-align:left;background:var(--surface);color:var(--ink);border:1.5px solid var(--line);border-radius:10px;padding:10px}
-.player .num{font-size:1.1rem;min-width:2.2em;color:var(--accent)}
-.player .nm{font-weight:500;font-size:.95rem;line-height:1.2}
-.player.picked{opacity:.45}
-.player .tag{margin-left:auto;font-family:"Graduate",serif;font-size:1.15rem}
+/* Vote form: one big input per row */
+.big{font-size:1.15rem;padding:16px 14px;min-height:58px;border-radius:12px}
+select.big{appearance:none;-webkit-appearance:none;padding-right:44px;
+  background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+  background-position:calc(100% - 22px) 50%,calc(100% - 16px) 50%;background-size:6px 6px;background-repeat:no-repeat}
+.vote-label{display:flex;align-items:baseline;gap:8px}
+.vote-label .vv{font-family:"Graduate",serif;font-size:1.5rem;line-height:1}
+.vote-label[data-v="3"] .vv{color:var(--gold)}
+.vote-label[data-v="2"] .vv{color:var(--silver)}
+.vote-label[data-v="1"] .vv{color:var(--bronze)}
+.actions{margin-top:26px}
 
 /* Results */
 .board{list-style:none;padding:0;margin:0}
@@ -154,10 +137,9 @@ const API = "/api/bog";
 const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const st = {
   players: [], matches: [], submitted: [],
-  matchId: "", voter: "", goals: 0, picks: {3:null,2:null,1:null}, active: 3,
+  matchId: "", voter: "", goals: 0, picks: {3:null,2:null,1:null},
   flash: null, pin: "", resultsFor: "season", view: "vote",
 };
-const initials = n => n.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
 const byId = id => st.players.find(p => p.id === id);
 const label = m => m.title + (m.date ? " (" + new Date(m.date + "T00:00").toLocaleDateString(undefined, {day:"numeric", month:"short"}) + ")" : "");
 
@@ -200,10 +182,10 @@ async function renderVote(reload = true) {
   el.innerHTML = `
     ${st.flash ? `<div class="msg ${st.flash.ok ? "ok" : "err"}">${esc(st.flash.text)}</div>` : ""}
     <label for="match">Round</label>
-    <select id="match">${open.map(m => `<option value="${m.id}" ${m.id === st.matchId ? "selected" : ""}>${esc(label(m))}</option>`).join("")}</select>
+    <select id="match" class="big">${open.map(m => `<option value="${m.id}" ${m.id === st.matchId ? "selected" : ""}>${esc(label(m))}</option>`).join("")}</select>
 
     <label for="voter">Your name</label>
-    <select id="voter">
+    <select id="voter" class="big">
       <option value="">Select your name</option>
       ${st.players.map(p => {
         const done = st.submitted.includes(p.id);
@@ -211,33 +193,23 @@ async function renderVote(reload = true) {
       }).join("")}
     </select>
 
-    <label id="glabel">Goals you kicked</label>
-    <div class="stepper" role="group" aria-labelledby="glabel">
-      <button id="gminus" aria-label="One less goal" ${st.goals <= 0 ? "disabled" : ""}>−</button>
-      <div class="goals-val" aria-live="polite">${st.goals}</div>
-      <button id="gplus" aria-label="One more goal" ${st.goals >= 30 ? "disabled" : ""}>+</button>
-    </div>
+    ${[3,2,1].map(v => `
+      <label for="v${v}" class="vote-label" data-v="${v}"><span class="vv">${v}</span> ${v === 1 ? "vote" : "votes"}</label>
+      <select id="v${v}" class="big" data-v="${v}">
+        <option value="">Select a player</option>
+        ${choices.map(p => {
+          const taken = [3,2,1].some(x => x !== v && st.picks[x] === p.id);
+          return `<option value="${p.id}" ${st.picks[v] === p.id ? "selected" : ""} ${taken ? "disabled" : ""}>${esc(p.name)}</option>`;
+        }).join("")}
+      </select>`).join("")}
 
-    <label>Your votes</label>
-    <div class="slots" role="group" aria-label="Your votes">
-      ${[3,2,1].map(v => {
-        const p = st.picks[v] && byId(st.picks[v]);
-        return `<button class="slot ${p ? "filled" : ""} ${st.active === v && !p ? "active" : ""}" data-v="${v}" aria-label="${v} votes${p ? ": " + esc(p.name) + ", tap to clear" : ""}">
-          <span class="slot-val">${v}</span>
-          ${p ? `<span class="who">${esc(p.name)}</span><span class="hint">Tap to clear</span>` : `<span class="hint">${st.active === v ? "Pick a player" : "Empty"}</span>`}
-        </button>`;
-      }).join("")}
-    </div>
-    <ul class="players">
-      ${choices.map(p => {
-        const v = [3,2,1].find(x => st.picks[x] === p.id);
-        return `<li><button class="player ${v ? "picked" : ""}" data-p="${p.id}">
-          <span class="num">${p.num ?? initials(p.name)}</span><span class="nm">${esc(p.name)}</span>${v ? `<span class="tag">${v}</span>` : ""}
-        </button></li>`;
-      }).join("")}
-    </ul>
-    <button class="btn" id="submit" ${ready ? "" : "disabled"}>Submit votes</button>
+    <label for="goals">How many goals did you kick?</label>
+    <input id="goals" class="big" type="number" inputmode="numeric" min="0" max="30" step="1" value="${st.goals}">
+
+    <div class="actions">
+    <button class="btn" id="submit" ${ready ? "" : "disabled"}>Submit</button>
     <p class="note">${st.voter ? "Votes are shown only as team totals. No one can see who you voted for." : "Select your name to submit."}</p>
+    </div>
   `;
 
   el.querySelector("#match").onchange = async e => { st.matchId = e.target.value; st.flash = null; reset(); renderVote(); };
@@ -246,22 +218,19 @@ async function renderVote(reload = true) {
     [3,2,1].forEach(v => { if (st.picks[v] === st.voter) st.picks[v] = null; });
     renderVote(false);
   };
-  el.querySelector("#gminus").onclick = () => { st.goals = Math.max(0, st.goals - 1); renderVote(false); };
-  el.querySelector("#gplus").onclick = () => { st.goals = Math.min(30, st.goals + 1); renderVote(false); };
-  el.querySelectorAll(".slot").forEach(b => b.onclick = () => {
-    const v = +b.dataset.v; st.picks[v] = null; st.active = v; renderVote(false);
+  el.querySelectorAll("select[data-v]").forEach(sel => sel.onchange = () => {
+    st.picks[+sel.dataset.v] = sel.value || null; renderVote(false);
   });
-  el.querySelectorAll(".player").forEach(b => b.onclick = () => {
-    const id = b.dataset.p;
-    const had = [3,2,1].find(x => st.picks[x] === id);
-    if (had) { st.picks[had] = null; st.active = had; }
-    else { st.picks[st.active] = id; st.active = [3,2,1].find(x => !st.picks[x]) || st.active; }
-    renderVote(false);
-  });
+  el.querySelector("#goals").oninput = e => { st.goals = e.target.value; };
   el.querySelector("#submit").onclick = async e => {
+    const goals = String(st.goals).trim() === "" ? 0 : Number(st.goals);
+    if (!Number.isInteger(goals) || goals < 0 || goals > 30) {
+      st.flash = { ok: false, text: "Goals must be a whole number from 0 to 30." };
+      renderVote(false); scrollTo(0, 0); return;
+    }
     e.target.disabled = true; e.target.textContent = "Submitting…";
     try {
-      await post({ action: "vote", match: st.matchId, voter: st.voter, goals: st.goals, v3: st.picks[3], v2: st.picks[2], v1: st.picks[1] });
+      await post({ action: "vote", match: st.matchId, voter: st.voter, goals, v3: st.picks[3], v2: st.picks[2], v1: st.picks[1] });
       st.flash = { ok: true, text: `Thanks ${byId(st.voter).name.split(" ")[0]}, your votes are in.` };
       reset(); st.voter = "";
       renderVote(); scrollTo(0, 0);
@@ -271,7 +240,7 @@ async function renderVote(reload = true) {
     }
   };
 }
-function reset() { st.picks = {3:null,2:null,1:null}; st.active = 3; st.goals = 0; }
+function reset() { st.picks = {3:null,2:null,1:null}; st.goals = 0; }
 
 /* ---------- RESULTS ---------- */
 async function renderResults() {

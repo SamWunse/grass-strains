@@ -17,6 +17,7 @@ const PLAYERS = [
   { id: "matty", name: "Matty" },
   { id: "michael", name: "Michael" },
   { id: "pete-oslewski", name: "Pete Oslewski" },
+  { id: "sam-dolling", name: "Sam Dolling (K.Oath)" },
   { id: "steve-cocking", name: "Steve Cocking" },
   { id: "timmy-willick", name: "Timmy Willick" },
   { id: "tony-evans", name: "Tony Evans" },
