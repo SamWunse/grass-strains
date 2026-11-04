@@ -46,29 +46,15 @@ export default async (req) => {
   const s = store();
 
   if (req.method === "GET") {
+    // Public data: just what the Vote screen needs. No tallies, goals or scores.
     const url = new URL(req.url);
-    const which = url.searchParams.get("match") || "season";
+    const which = url.searchParams.get("match");
     const matches = await getMatches(s);
-    const ids = which === "season" ? matches.map(m => m.id) : [which];
-    const subs = (await Promise.all(ids.map(id => getSubs(s, id)))).flat();
-
-    const tally = {};
-    const goals = {};
-    for (const p of PLAYERS) { tally[p.id] = { pts: 0, c3: 0, c2: 0, c1: 0 }; goals[p.id] = 0; }
-    for (const x of subs) {
-      if (tally[x.v3]) { tally[x.v3].pts += 3; tally[x.v3].c3++; }
-      if (tally[x.v2]) { tally[x.v2].pts += 2; tally[x.v2].c2++; }
-      if (tally[x.v1]) { tally[x.v1].pts += 1; tally[x.v1].c1++; }
-      if (goals[x.voter] !== undefined) goals[x.voter] += x.goals || 0;
-    }
-    // Only totals and who has submitted are returned. Individual ballots never leave the server.
+    const submitted = which ? (await getSubs(s, which)).map(x => x.voter) : [];
     return json({
       players: PLAYERS,
-      matches,
-      ballots: subs.length,
-      tally,
-      goals,
-      submitted: which === "season" ? [] : subs.map(x => x.voter),
+      matches: matches.map(({ id, title, date, open }) => ({ id, title, date, open })),
+      submitted,
     });
   }
 
@@ -101,6 +87,43 @@ export default async (req) => {
   if (String(body.pin) !== String(pin)) return json({ error: "That PIN is incorrect." }, 401);
 
   if (body.action === "checkPin") return json({ ok: true });
+
+  if (body.action === "results") {
+    const which = body.match || "season";
+    const ids = which === "season" ? matches.map(m => m.id) : [which];
+    const subs = (await Promise.all(ids.map(id => getSubs(s, id)))).flat();
+    const tally = {};
+    const goals = {};
+    for (const p of PLAYERS) { tally[p.id] = { pts: 0, c3: 0, c2: 0, c1: 0 }; goals[p.id] = 0; }
+    for (const x of subs) {
+      if (tally[x.v3]) { tally[x.v3].pts += 3; tally[x.v3].c3++; }
+      if (tally[x.v2]) { tally[x.v2].pts += 2; tally[x.v2].c2++; }
+      if (tally[x.v1]) { tally[x.v1].pts += 1; tally[x.v1].c1++; }
+      if (goals[x.voter] !== undefined) goals[x.voter] += x.goals || 0;
+    }
+    // Only totals and who has submitted are returned. Individual ballots never leave the server.
+    return json({
+      players: PLAYERS,
+      matches,
+      ballots: subs.length,
+      tally,
+      goals,
+      submitted: which === "season" ? [] : subs.map(x => x.voter),
+    });
+  }
+
+  if (body.action === "score") {
+    const m = matches.find(x => x.id === body.id);
+    if (!m) return json({ error: "Round not found." }, 404);
+    const n = v => (v === "" || v === null || v === undefined) ? 0 : Number(v);
+    const sc = { us: { g: n(body.us?.g), b: n(body.us?.b) }, them: { g: n(body.them?.g), b: n(body.them?.b) } };
+    const all = [sc.us.g, sc.us.b, sc.them.g, sc.them.b];
+    if (!all.every(v => Number.isInteger(v) && v >= 0 && v <= 99)) return json({ error: "Goals and behinds must be whole numbers from 0 to 99." }, 400);
+    m.opponent = String(body.opponent || "").trim().slice(0, 40);
+    m.score = sc;
+    await s.setJSON("matches", matches);
+    return json({ ok: true });
+  }
 
   if (body.action === "addMatch") {
     const title = String(body.title || "").trim().slice(0, 80);
