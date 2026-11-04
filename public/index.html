@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Grass Stains | Best on Ground</title>
+<meta name="theme-color" content="#04131F">
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="preload" href="/fonts/graduate-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face{font-family:"Graduate";src:url(/fonts/graduate-latin-400-normal.woff2) format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-400-normal.woff2) format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-500-normal.woff2) format("woff2");font-weight:500;font-display:swap}
+@font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-600-normal.woff2) format("woff2");font-weight:600;font-display:swap}
+:root{
+  color-scheme: light;
+  --navy:#04131F; --navy-2:#0B2233;
+  --cream:#F8F1E3; --paper:#FFFDF8;
+  --grass:#6CB52C; --grass-deep:#2F5A10; --grass-ink:#3D7A12;
+  --bg:var(--cream); --surface:var(--paper); --ink:var(--navy); --muted:#55606A;
+  --line:#E2D8C4; --accent:var(--grass-ink);
+  --gold:#C9971F; --silver:#8E969F; --bronze:#A8652F; --danger:#B3261E;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    color-scheme: dark;
+    --bg:#06172A; --surface:#0E2438; --ink:#F8F1E3; --muted:#9EAAB4;
+    --line:#1E3A52; --accent:var(--grass);
+    --gold:#E2B33C; --silver:#B8BEC6; --bronze:#D08C52; --danger:#F2B8B5;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  font-family:"Barlow",system-ui,sans-serif;font-size:16px;line-height:1.45;
+  background:var(--bg);color:var(--ink);
+  padding-bottom:calc(76px + env(safe-area-inset-bottom));
+}
+h1,h2,.num,.slot-val,.tab,.pts,.rank,.goals-val{font-family:"Graduate","Barlow",serif;font-weight:400}
+
+/* Crest header: the crest sits on the navy band and breaks over its bottom edge */
+header{
+  background:var(--navy);color:var(--cream);text-align:center;
+  padding:calc(18px + env(safe-area-inset-top)) 18px 0;
+  border-bottom:4px solid var(--grass);
+  position:relative;margin-bottom:84px;
+}
+header h1{margin:0;font-size:1.45rem;letter-spacing:.04em;line-height:1.1}
+header p{margin:4px 0 0;color:#B9C4CC;font-size:.92rem}
+.crest{
+  display:block;width:148px;height:auto;margin:14px auto -84px;
+  position:relative;z-index:1;filter:drop-shadow(0 6px 10px rgba(4,19,31,.35));
+}
+main{max-width:560px;margin:0 auto;padding:6px 16px 18px}
+h2{font-size:1.35rem;margin:26px 0 10px;line-height:1.15;letter-spacing:.02em}
+h2:first-child{margin-top:4px}
+select,input{
+  width:100%;font:inherit;color:var(--ink);background:var(--surface);
+  border:1.5px solid var(--line);border-radius:10px;padding:12px;
+}
+label{display:block;font-weight:600;font-size:.9rem;margin:16px 0 6px;color:var(--muted)}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--grass);outline-offset:2px}
+.btn{
+  width:100%;border:0;border-radius:12px;padding:15px;font-weight:600;font-size:1.05rem;
+  background:var(--navy);color:var(--cream);box-shadow:inset 0 -4px 0 var(--grass);
+}
+@media (prefers-color-scheme: dark){.btn{background:var(--grass);color:var(--navy);box-shadow:inset 0 -4px 0 var(--grass-deep)}}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.note{color:var(--muted);font-size:.92rem;margin:8px 0}
+.msg{padding:14px;border-radius:12px;background:var(--surface);border:1.5px solid var(--line);margin:12px 0}
+.msg.err{border-color:var(--danger);color:var(--danger)}
+.msg.ok{border-color:var(--grass);border-left-width:6px}
+
+/* Goals stepper */
+.stepper{display:flex;align-items:stretch;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.stepper button{width:64px;border:0;background:none;color:var(--ink);font-size:1.8rem;font-weight:600}
+.stepper button:disabled{opacity:.3}
+.goals-val{flex:1;text-align:center;font-size:2.3rem;padding:6px 0 2px;border-left:1.5px solid var(--line);border-right:1.5px solid var(--line)}
+
+/* Vote slots */
+.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:8px 0 14px}
+.slot{
+  border:2px dashed var(--line);border-radius:14px;background:transparent;color:var(--ink);
+  padding:12px 6px;text-align:center;min-height:116px;display:flex;flex-direction:column;
+  align-items:center;gap:6px;transition:border-color .15s, background .15s;
+}
+.slot-val{font-size:2.9rem;line-height:1;color:var(--muted)}
+.slot .who{font-size:.85rem;font-weight:600;line-height:1.2}
+.slot .hint{font-size:.78rem;color:var(--muted)}
+.slot.active{border-style:solid;border-color:var(--grass)}
+.slot.filled{border-style:solid;background:var(--surface)}
+.slot[data-v="3"].filled{border-color:var(--gold)} .slot[data-v="3"].filled .slot-val{color:var(--gold)}
+.slot[data-v="2"].filled{border-color:var(--silver)} .slot[data-v="2"].filled .slot-val{color:var(--silver)}
+.slot[data-v="1"].filled{border-color:var(--bronze)} .slot[data-v="1"].filled .slot-val{color:var(--bronze)}
+
+.players{list-style:none;margin:0 0 18px;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.player{width:100%;display:flex;align-items:center;gap:10px;text-align:left;background:var(--surface);color:var(--ink);border:1.5px solid var(--line);border-radius:10px;padding:10px}
+.player .num{font-size:1.1rem;min-width:2.2em;color:var(--accent)}
+.player .nm{font-weight:500;font-size:.95rem;line-height:1.2}
+.player.picked{opacity:.45}
+.player .tag{margin-left:auto;font-family:"Graduate",serif;font-size:1.15rem}
+
+/* Results */
+.board{list-style:none;padding:0;margin:0}
+.board li{display:flex;align-items:center;gap:12px;padding:11px 2px;border-bottom:1px solid var(--line)}
+.board .rank{font-size:1.1rem;width:1.8em;color:var(--muted)}
+.board li:first-child{background:linear-gradient(90deg, color-mix(in srgb, var(--grass) 18%, transparent), transparent 80%);border-radius:8px 0 0 8px}
+.board li:first-child .rank{color:var(--accent)}
+.board .nm{flex:1;font-weight:600}
+.board .break{font-size:.8rem;color:var(--muted);font-weight:400}
+.board .pts{font-size:1.5rem}
+
+/* Admin */
+.match-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
+.match-row .info{flex:1}
+.match-row .info b{display:block}
+.match-row .info span{font-size:.85rem;color:var(--muted)}
+.small{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:8px 10px;font-size:.85rem;font-weight:600}
+.small.del{color:var(--danger)}
+.status{font-size:.8rem;font-weight:600;padding:1px 8px;border-radius:99px;border:1.5px solid currentColor;margin-left:6px}
+.status.open{color:var(--accent)}
+
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--navy);border-top:3px solid var(--grass);padding-bottom:env(safe-area-inset-bottom);z-index:5}
+.tab{flex:1;border:0;background:none;color:#8C9AA6;padding:15px 0 13px;font-size:.95rem;letter-spacing:.06em}
+.tab[aria-current="true"]{color:var(--cream);box-shadow:inset 0 -4px 0 var(--grass)}
+.hidden{display:none !important}
+@media (prefers-reduced-motion: reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Best on Ground</h1>
+  <p>Log your goals and cast your 3, 2, 1 votes.</p>
+  <img class="crest" src="/logo.png" alt="Grass Stains, est. 2025" width="400" height="486">
+</header>
+
+<main>
+  <section id="view-vote"></section>
+  <section id="view-results" class="hidden"></section>
+  <section id="view-admin" class="hidden"></section>
+</main>
+
+<nav>
+  <button class="tab" data-view="vote" aria-current="true">Vote</button>
+  <button class="tab" data-view="results">Results</button>
+  <button class="tab" data-view="admin">Rounds</button>
+</nav>
+
+<script>
+const API = "/api/bog";
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const st = {
+  players: [], matches: [], submitted: [],
+  matchId: "", voter: "", goals: 0, picks: {3:null,2:null,1:null}, active: 3,
+  flash: null, pin: "", resultsFor: "season", view: "vote",
+};
+const initials = n => n.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
+const byId = id => st.players.find(p => p.id === id);
+const label = m => m.title + (m.date ? " (" + new Date(m.date + "T00:00").toLocaleDateString(undefined, {day:"numeric", month:"short"}) + ")" : "");
+
+async function getData(match) {
+  const r = await fetch(`${API}?match=${encodeURIComponent(match)}`, { cache: "no-store" });
+  if (!r.ok) throw new Error("Couldn't load data.");
+  const d = await r.json();
+  st.players = d.players;
+  st.matches = d.matches.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  return d;
+}
+async function post(body) {
+  const r = await fetch(API, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.error || "Something went wrong. Try again.");
+  return d;
+}
+const loadErr = el => el.innerHTML = `<div class="msg err">Couldn't reach the server. Check your connection and refresh.</div>`;
+
+/* ---------- VOTE ---------- */
+async function renderVote(reload = true) {
+  const el = document.getElementById("view-vote");
+  if (reload) {
+    try {
+      await getData("season");
+      const open = st.matches.filter(m => m.open);
+      if (!open.find(m => m.id === st.matchId)) st.matchId = open[0]?.id || "";
+      if (st.matchId) st.submitted = (await getData(st.matchId)).submitted;
+    } catch { return loadErr(el); }
+  }
+  const open = st.matches.filter(m => m.open);
+  if (!open.length) {
+    el.innerHTML = `<h2>No rounds open</h2><p class="note">Voting opens once a round is added under Rounds.</p>`;
+    return;
+  }
+  if (st.submitted.includes(st.voter)) st.voter = "";
+  const ready = st.voter && [3,2,1].every(v => st.picks[v]);
+  const choices = st.players.filter(p => p.id !== st.voter);
+
+  el.innerHTML = `
+    ${st.flash ? `<div class="msg ${st.flash.ok ? "ok" : "err"}">${esc(st.flash.text)}</div>` : ""}
+    <label for="match">Round</label>
+    <select id="match">${open.map(m => `<option value="${m.id}" ${m.id === st.matchId ? "selected" : ""}>${esc(label(m))}</option>`).join("")}</select>
+
+    <label for="voter">Your name</label>
+    <select id="voter">
+      <option value="">Select your name</option>
+      ${st.players.map(p => {
+        const done = st.submitted.includes(p.id);
+        return `<option value="${p.id}" ${p.id === st.voter ? "selected" : ""} ${done ? "disabled" : ""}>${esc(p.name)}${done ? " (submitted)" : ""}</option>`;
+      }).join("")}
+    </select>
+
+    <label id="glabel">Goals you kicked</label>
+    <div class="stepper" role="group" aria-labelledby="glabel">
+      <button id="gminus" aria-label="One less goal" ${st.goals <= 0 ? "disabled" : ""}>−</button>
+      <div class="goals-val" aria-live="polite">${st.goals}</div>
+      <button id="gplus" aria-label="One more goal" ${st.goals >= 30 ? "disabled" : ""}>+</button>
+    </div>
+
+    <label>Your votes</label>
+    <div class="slots" role="group" aria-label="Your votes">
+      ${[3,2,1].map(v => {
+        const p = st.picks[v] && byId(st.picks[v]);
+        return `<button class="slot ${p ? "filled" : ""} ${st.active === v && !p ? "active" : ""}" data-v="${v}" aria-label="${v} votes${p ? ": " + esc(p.name) + ", tap to clear" : ""}">
+          <span class="slot-val">${v}</span>
+          ${p ? `<span class="who">${esc(p.name)}</span><span class="hint">Tap to clear</span>` : `<span class="hint">${st.active === v ? "Pick a player" : "Empty"}</span>`}
+        </button>`;
+      }).join("")}
+    </div>
+    <ul class="players">
+      ${choices.map(p => {
+        const v = [3,2,1].find(x => st.picks[x] === p.id);
+        return `<li><button class="player ${v ? "picked" : ""}" data-p="${p.id}">
+          <span class="num">${p.num ?? initials(p.name)}</span><span class="nm">${esc(p.name)}</span>${v ? `<span class="tag">${v}</span>` : ""}
+        </button></li>`;
+      }).join("")}
+    </ul>
+    <button class="btn" id="submit" ${ready ? "" : "disabled"}>Submit votes</button>
+    <p class="note">${st.voter ? "Votes are shown only as team totals. No one can see who you voted for." : "Select your name to submit."}</p>
+  `;
+
+  el.querySelector("#match").onchange = async e => { st.matchId = e.target.value; st.flash = null; reset(); renderVote(); };
+  el.querySelector("#voter").onchange = e => {
+    st.voter = e.target.value; st.flash = null;
+    [3,2,1].forEach(v => { if (st.picks[v] === st.voter) st.picks[v] = null; });
+    renderVote(false);
+  };
+  el.querySelector("#gminus").onclick = () => { st.goals = Math.max(0, st.goals - 1); renderVote(false); };
+  el.querySelector("#gplus").onclick = () => { st.goals = Math.min(30, st.goals + 1); renderVote(false); };
+  el.querySelectorAll(".slot").forEach(b => b.onclick = () => {
+    const v = +b.dataset.v; st.picks[v] = null; st.active = v; renderVote(false);
+  });
+  el.querySelectorAll(".player").forEach(b => b.onclick = () => {
+    const id = b.dataset.p;
+    const had = [3,2,1].find(x => st.picks[x] === id);
+    if (had) { st.picks[had] = null; st.active = had; }
+    else { st.picks[st.active] = id; st.active = [3,2,1].find(x => !st.picks[x]) || st.active; }
+    renderVote(false);
+  });
+  el.querySelector("#submit").onclick = async e => {
+    e.target.disabled = true; e.target.textContent = "Submitting…";
+    try {
+      await post({ action: "vote", match: st.matchId, voter: st.voter, goals: st.goals, v3: st.picks[3], v2: st.picks[2], v1: st.picks[1] });
+      st.flash = { ok: true, text: `Thanks ${byId(st.voter).name.split(" ")[0]}, your votes are in.` };
+      reset(); st.voter = "";
+      renderVote(); scrollTo(0, 0);
+    } catch (err) {
+      st.flash = { ok: false, text: err.message };
+      renderVote(false); scrollTo(0, 0);
+    }
+  };
+}
+function reset() { st.picks = {3:null,2:null,1:null}; st.active = 3; st.goals = 0; }
+
+/* ---------- RESULTS ---------- */
+async function renderResults() {
+  const el = document.getElementById("view-results");
+  el.innerHTML = `<p class="note">Counting votes…</p>`;
+  let d;
+  try {
+    await getData("season");
+    if (st.resultsFor !== "season" && !st.matches.find(m => m.id === st.resultsFor)) st.resultsFor = "season";
+    d = await getData(st.resultsFor);
+  } catch { return loadErr(el); }
+
+  const votes = st.players.map(p => ({ p, ...d.tally[p.id] })).filter(r => r.pts > 0)
+    .sort((a, b) => b.pts - a.pts || b.c3 - a.c3 || b.c2 - a.c2);
+  const goals = st.players.map(p => ({ p, g: d.goals[p.id] })).filter(r => r.g > 0).sort((a, b) => b.g - a.g);
+  const pending = st.resultsFor === "season" ? [] : st.players.filter(p => !d.submitted.includes(p.id));
+
+  el.innerHTML = `
+    <label for="rfor">Show</label>
+    <select id="rfor">
+      <option value="season" ${st.resultsFor === "season" ? "selected" : ""}>Season total</option>
+      ${st.matches.map(m => `<option value="${m.id}" ${st.resultsFor === m.id ? "selected" : ""}>${esc(label(m))}</option>`).join("")}
+    </select>
+
+    <h2>Votes</h2>
+    ${!votes.length ? `<p class="note">No votes yet.</p>` : `
+      <p class="note">${d.ballots} ballot${d.ballots === 1 ? "" : "s"} counted</p>
+      <ol class="board">${votes.map((r, i) => `
+        <li><span class="rank">${i + 1}</span>
+          <span class="nm">${esc(r.p.name)}<br><span class="break">${r.c3}×3, ${r.c2}×2, ${r.c1}×1</span></span>
+          <span class="pts">${r.pts}</span></li>`).join("")}</ol>`}
+
+    <h2>Goals</h2>
+    ${!goals.length ? `<p class="note">No goals logged yet.</p>` : `
+      <ol class="board">${goals.map((r, i) => `
+        <li><span class="rank">${i + 1}</span><span class="nm">${esc(r.p.name)}</span><span class="pts">${r.g}</span></li>`).join("")}</ol>`}
+
+    ${st.resultsFor !== "season" ? `
+      <h2>Still to vote</h2>
+      <p class="note">${pending.length ? pending.map(p => esc(p.name)).join(", ") : "Everyone has voted."}</p>` : ""}
+  `;
+  el.querySelector("#rfor").onchange = e => { st.resultsFor = e.target.value; renderResults(); };
+}
+
+/* ---------- ADMIN ---------- */
+async function renderAdmin(msg) {
+  const el = document.getElementById("view-admin");
+  if (!st.pin) {
+    el.innerHTML = `<h2>Manage rounds</h2>
+      <label for="pin">Admin PIN</label>
+      <input id="pin" type="password" inputmode="numeric" autocomplete="off">
+      <div style="height:12px"></div>
+      <button class="btn" id="unlock">Unlock</button>
+      <div id="pinerr"></div>`;
+    const go = async () => {
+      const pin = el.querySelector("#pin").value;
+      try { await post({ action: "checkPin", pin }); st.pin = pin; renderAdmin(); }
+      catch (err) { el.querySelector("#pinerr").innerHTML = `<div class="msg err">${esc(err.message)}</div>`; }
+    };
+    el.querySelector("#unlock").onclick = go;
+    el.querySelector("#pin").onkeydown = e => { if (e.key === "Enter") go(); };
+    return;
+  }
+  try { await getData("season"); } catch { return loadErr(el); }
+  const today = new Date().toISOString().slice(0, 10);
+  el.innerHTML = `
+    ${msg ? `<div class="msg err">${esc(msg)}</div>` : ""}
+    <h2>Add a round</h2>
+    <label for="mt">Round name</label>
+    <input id="mt" placeholder="Round 4 vs Eastside">
+    <label for="md">Date</label>
+    <input id="md" type="date" value="${today}">
+    <div style="height:14px"></div>
+    <button class="btn" id="add">Add round and open voting</button>
+    <h2>Rounds</h2>
+    ${st.matches.length ? st.matches.map(m => `
+      <div class="match-row">
+        <div class="info"><b>${esc(m.title)}</b><span>${m.date || ""}<span class="status ${m.open ? "open" : ""}">${m.open ? "Open" : "Closed"}</span></span></div>
+        <button class="small" data-toggle="${m.id}">${m.open ? "Close" : "Reopen"}</button>
+        <button class="small del" data-del="${m.id}" aria-label="Delete ${esc(m.title)}">Delete</button>
+      </div>`).join("") : `<p class="note">No rounds yet. Add your first one above.</p>`}`;
+
+  const act = async body => {
+    try { await post({ ...body, pin: st.pin }); renderAdmin(); }
+    catch (err) { renderAdmin(err.message); }
+  };
+  el.querySelector("#add").onclick = () => {
+    const title = el.querySelector("#mt").value.trim();
+    if (!title) return el.querySelector("#mt").focus();
+    act({ action: "addMatch", title, date: el.querySelector("#md").value });
+  };
+  el.querySelectorAll("[data-toggle]").forEach(b => b.onclick = () => act({ action: "toggle", id: b.dataset.toggle }));
+  el.querySelectorAll("[data-del]").forEach(b => b.onclick = () => {
+    const m = st.matches.find(x => x.id === b.dataset.del);
+    if (confirm(`Delete "${m.title}" and all its votes and goals?`)) act({ action: "delete", id: m.id });
+  });
+}
+
+/* ---------- nav ---------- */
+function show(view) {
+  st.view = view;
+  document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-current", t.dataset.view === view));
+  ["vote", "results", "admin"].forEach(v => document.getElementById("view-" + v).classList.toggle("hidden", v !== view));
+  if (view === "vote") { st.flash = null; renderVote(); }
+  if (view === "results") renderResults();
+  if (view === "admin") renderAdmin();
+}
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => show(t.dataset.view));
+document.getElementById("view-vote").innerHTML = `<p class="note">Loading rounds…</p>`;
+renderVote();
+</script>
+</body>
+</html>

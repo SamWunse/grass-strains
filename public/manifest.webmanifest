@@ -1,0 +1,12 @@
+{
+  "name": "Grass Stains Best on Ground",
+  "short_name": "Grass Stains",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F8F1E3",
+  "theme_color": "#04131F",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
