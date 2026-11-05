@@ -621,7 +621,7 @@ async function renderRounds(msg) {
 
         <h3>Best on ground</h3>
         ${m.bog.length ? `<ol class="bog3">${m.bog.map(x => `<li><span class="pos p${x.pos}">${x.tied ? "=" : ""}${x.pos}</span><span class="who">${esc(nameOf(x.id))}</span></li>`).join("")}</ol>`
-          : `<p class="note">${m.bogHidden ? "Revealed when voting closes." : "No votes yet."}</p>`}
+          : `<p class="note">No votes yet.</p>`}
 
         ${admin ? `
           <div class="rc-actions">

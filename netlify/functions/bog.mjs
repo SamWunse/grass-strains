@@ -45,8 +45,7 @@ async function getSubs(s, matchId) {
 // Per-round summary for the Rounds page: score, goalkickers with goals, and the
 // best on ground top 3 as names and places only (never vote counts or ballots).
 // Ties are broken by 3-vote then 2-vote counts; exact ties share a place.
-// For players, the top 3 of a round stays hidden until its voting is closed.
-function summarise(m, subs, revealOpen) {
+function summarise(m, subs) {
   const t = {};
   const kick = {};
   for (const x of subs) {
@@ -64,17 +63,15 @@ function summarise(m, subs, revealOpen) {
   ranked.forEach((r, i) => { r.pos = i && key(r) === key(ranked[i - 1]) ? ranked[i - 1].pos : i + 1; });
   const bog = ranked.filter(r => r.pos <= 3)
     .map(r => ({ id: r.id, pos: r.pos, tied: ranked.some(o => o !== r && key(o) === key(r)) }));
-  const hidden = m.open && !revealOpen;
   return {
     id: m.id, title: m.title, date: m.date, open: m.open,
     opponent: m.opponent || "", score: m.score || null,
     kickers: Object.entries(kick).map(([id, g]) => ({ id, g })).sort((a, b) => b.g - a.g),
-    bog: hidden ? [] : bog,
-    bogHidden: hidden && bog.length > 0,
+    bog,
   };
 }
-async function roundsSummary(s, matches, revealOpen) {
-  return Promise.all(matches.map(async m => summarise(m, await getSubs(s, m.id), revealOpen)));
+async function roundsSummary(s, matches) {
+  return Promise.all(matches.map(async m => summarise(m, await getSubs(s, m.id))));
 }
 
 export default async (req) => {
@@ -87,7 +84,7 @@ export default async (req) => {
     const which = url.searchParams.get("match");
     const matches = await getMatches(s);
     if (url.searchParams.get("view") === "rounds")
-      return json({ players: PLAYERS, rounds: await roundsSummary(s, matches, false) });
+      return json({ players: PLAYERS, rounds: await roundsSummary(s, matches) });
     const submitted = which ? (await getSubs(s, which)).map(x => x.voter) : [];
     return json({
       players: PLAYERS,
@@ -126,7 +123,7 @@ export default async (req) => {
 
   if (body.action === "checkPin") return json({ ok: true });
 
-  if (body.action === "rounds") return json({ players: PLAYERS, rounds: await roundsSummary(s, matches, true) });
+  if (body.action === "rounds") return json({ players: PLAYERS, rounds: await roundsSummary(s, matches) });
 
   if (body.action === "editMatch") {
     const m = matches.find(x => x.id === body.id);
