@@ -112,6 +112,26 @@ select.big{appearance:none;-webkit-appearance:none;padding-right:44px;
 .board .nm{flex:1;font-weight:600}
 .board .break{font-size:.8rem;color:var(--muted);font-weight:400}
 .board .pts{font-size:1.5rem}
+/* Season pages: summary tiles and per-round breakdowns */
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0 4px}
+.tile{border:1.5px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center}
+.tile b{display:block;font-family:"Graduate",serif;font-weight:400;font-size:1.5rem;line-height:1.1}
+.tile span{font-size:.78rem;color:var(--muted)}
+.leader{border:2px solid var(--gold);border-radius:14px;padding:14px;margin:12px 0 4px;display:flex;align-items:center;gap:12px}
+.leader .lbl{font-size:.8rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.leader .who{font-weight:600;font-size:1.1rem}
+.leader .big{margin-left:auto;font-family:"Graduate",serif;font-size:2.2rem;color:var(--gold)}
+.rounds{list-style:none;margin:0 0 10px 2.4em;padding:0}
+.rounds li{display:flex !important;gap:10px;padding:6px 0 !important;border:0 !important;background:none !important;font-size:.92rem;align-items:baseline}
+.rounds .rt{flex:1}
+.rounds .rt small{display:block;color:var(--muted);font-size:.8rem}
+.rounds .rv{font-family:"Graduate",serif;font-size:1.1rem}
+.tbl{width:100%;border-collapse:collapse;font-size:.92rem}
+.tbl th{text-align:left;font-size:.78rem;color:var(--muted);font-weight:600;padding:6px 4px;border-bottom:1.5px solid var(--line)}
+.tbl td{padding:9px 4px;border-bottom:1px solid var(--line)}
+.tbl .n{text-align:right;font-family:"Graduate",serif}
+.tbl .warn{color:var(--danger)}
+
 /* Expandable vote rows (admin): tap a player to see who voted for them */
 .board li.x{display:block;padding:0}
 .board details summary{display:flex;align-items:center;gap:12px;padding:11px 2px;cursor:pointer;list-style:none}
@@ -156,7 +176,8 @@ select.big{appearance:none;-webkit-appearance:none;padding-right:44px;
 .record{font-family:"Graduate",serif;font-size:1.2rem}
 
 nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--navy);border-top:3px solid var(--grass);padding-bottom:env(safe-area-inset-bottom);z-index:5}
-.tab{flex:1;border:0;background:none;color:#8C9AA6;padding:15px 0 13px;font-size:.95rem;letter-spacing:.06em}
+.tab{flex:1;min-width:0;border:0;background:none;color:#8C9AA6;padding:15px 0 13px;font-size:.95rem;letter-spacing:.06em}
+nav.admin .tab{font-size:.78rem;letter-spacing:.02em;padding:15px 2px 13px}
 .tab[aria-current="true"]{color:var(--cream);box-shadow:inset 0 -4px 0 var(--grass)}
 .hidden{display:none !important}
 @media (prefers-reduced-motion: reduce){*{transition:none !important}}
@@ -228,12 +249,16 @@ nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--navy);b
 <main>
   <section id="view-vote"></section>
   <section id="view-results" class="hidden"></section>
+  <section id="view-bnf" class="hidden"></section>
+  <section id="view-goals" class="hidden"></section>
   <section id="view-admin" class="hidden"></section>
 </main>
 
 <nav>
   <button class="tab" data-view="vote" aria-current="true">Vote</button>
   <button class="tab hidden" data-view="results">Results</button>
+  <button class="tab hidden" data-view="bnf">B&amp;F</button>
+  <button class="tab hidden" data-view="goals">Goals</button>
   <button class="tab" data-view="admin">Rounds</button>
 </nav>
 
@@ -430,6 +455,101 @@ async function renderResults() {
   el.querySelector("#rfor").onchange = e => { st.resultsFor = e.target.value; renderResults(); };
 }
 
+/* ---------- SEASON PAGES (admin only) ---------- */
+const byDate = ms => ms.slice().sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+const short = m => m.title + (m.date ? " · " + new Date(m.date + "T00:00").toLocaleDateString(undefined, {day:"numeric", month:"short"}) : "");
+
+async function renderBnf() {
+  const el = document.getElementById("view-bnf");
+  if (!st.pin) return show("admin");
+  el.innerHTML = `<p class="note">Counting votes…</p>`;
+  let d;
+  try { d = await adminData("season"); } catch (err) { return el.innerHTML = `<div class="msg err">${esc(err.message)}</div>`; }
+  const matches = byDate(d.matches);
+  const nameOf = id => d.players.find(p => p.id === id)?.name || id;
+  const rows = d.players.map(p => {
+    const by = d.votedBy[p.id] || [];
+    const perRound = matches.map(m => {
+      const got = by.filter(x => x.match === m.id).sort((a, b) => b.v - a.v);
+      return { m, got, pts: got.reduce((n, x) => n + x.v, 0) };
+    }).filter(r => r.pts > 0);
+    return { p, ...d.tally[p.id], polled: perRound.length, perRound };
+  }).filter(r => r.pts > 0).sort((a, b) => b.pts - a.pts || b.c3 - a.c3 || b.c2 - a.c2 || a.p.name.localeCompare(b.p.name));
+  const top = rows[0];
+  const voted = matches.filter(m => (d.votedBy && Object.values(d.votedBy).some(a => a.some(x => x.match === m.id))));
+
+  el.innerHTML = `
+    <h2>Best &amp; Fairest</h2>
+    <p class="note">Season leaderboard from every round's 3-2-1 votes.</p>
+    ${!rows.length ? `<p class="note">No votes yet.</p>` : `
+      <div class="leader"><div><div class="lbl">Leading</div><div class="who">${esc(top.p.name)}</div></div><div class="big">${top.pts}</div></div>
+      <div class="tiles">
+        <div class="tile"><b>${voted.length}</b><span>rounds voted</span></div>
+        <div class="tile"><b>${d.ballots}</b><span>ballots</span></div>
+        <div class="tile"><b>${rows.length}</b><span>players polled</span></div>
+      </div>
+      <h2>Leaderboard</h2>
+      <p class="note">Tap a player for their votes round by round.</p>
+      <ol class="board">${rows.map((r, i) => `
+        <li class="x"><details><summary><span class="rank">${i + 1}</span>
+          <span class="nm">${esc(r.p.name)}<br><span class="break">${r.c3}×3, ${r.c2}×2, ${r.c1}×1 · polled in ${r.polled} round${r.polled === 1 ? "" : "s"}</span></span>
+          <span class="pts">${r.pts}</span><span class="chev" aria-hidden="true">▶</span></summary>
+          <ul class="rounds">${r.perRound.map(x => `<li><span class="rt">${esc(short(x.m))}<small>${x.got.map(g => g.v + " from " + esc(nameOf(g.voter))).join(", ")}</small></span><span class="rv">${x.pts}</span></li>`).join("")}</ul>
+        </details></li>`).join("")}</ol>`}
+  `;
+}
+
+async function renderGoals() {
+  const el = document.getElementById("view-goals");
+  if (!st.pin) return show("admin");
+  el.innerHTML = `<p class="note">Adding up goals…</p>`;
+  let d;
+  try { d = await adminData("season"); } catch (err) { return el.innerHTML = `<div class="msg err">${esc(err.message)}</div>`; }
+  const matches = byDate(d.matches);
+  const log = d.goalLog || [];
+  const rows = d.players.map(p => {
+    const perRound = matches.map(m => ({ m, g: log.filter(x => x.player === p.id && x.match === m.id).reduce((n, x) => n + x.g, 0) })).filter(r => r.g > 0);
+    const total = perRound.reduce((n, r) => n + r.g, 0);
+    const best = perRound.reduce((b, r) => r.g > (b?.g || 0) ? r : b, null);
+    return { p, total, perRound, best };
+  }).filter(r => r.total > 0).sort((a, b) => b.total - a.total || a.p.name.localeCompare(b.p.name));
+  const teamLogged = rows.reduce((n, r) => n + r.total, 0);
+  const roundsPlayed = matches.filter(m => m.score || log.some(x => x.match === m.id));
+  const top = rows[0];
+  const bestGame = rows.flatMap(r => r.perRound.map(x => ({ p: r.p, ...x }))).sort((a, b) => b.g - a.g)[0];
+
+  el.innerHTML = `
+    <h2>Leading Goalkicker</h2>
+    ${!rows.length ? `<p class="note">No goals logged yet.</p>` : `
+      <div class="leader"><div><div class="lbl">Leading</div><div class="who">${esc(top.p.name)}</div></div><div class="big">${top.total}</div></div>
+      <div class="tiles">
+        <div class="tile"><b>${teamLogged}</b><span>goals logged</span></div>
+        <div class="tile"><b>${rows.length}</b><span>goalkickers</span></div>
+        <div class="tile"><b>${bestGame.g}</b><span>best game<br>${esc(bestGame.p.name.split(" ")[0])}</span></div>
+      </div>
+      <h2>Leaderboard</h2>
+      <p class="note">Tap a player for their goals round by round.</p>
+      <ol class="board">${rows.map((r, i) => `
+        <li class="x"><details><summary><span class="rank">${i + 1}</span>
+          <span class="nm">${esc(r.p.name)}<br><span class="break">${r.perRound.length} game${r.perRound.length === 1 ? "" : "s"} with a goal · best ${r.best.g}</span></span>
+          <span class="pts">${r.total}</span><span class="chev" aria-hidden="true">▶</span></summary>
+          <ul class="rounds">${r.perRound.map(x => `<li><span class="rt">${esc(short(x.m))}</span><span class="rv">${x.g}</span></li>`).join("")}</ul>
+        </details></li>`).join("")}</ol>`}
+
+    <h2>Goals by round</h2>
+    ${!roundsPlayed.length ? `<p class="note">No rounds with goals or scores yet.</p>` : `
+      <table class="tbl">
+        <thead><tr><th>Round</th><th class="n">Logged</th><th class="n">Score</th></tr></thead>
+        <tbody>${roundsPlayed.map(m => {
+          const logged = log.filter(x => x.match === m.id).reduce((n, x) => n + x.g, 0);
+          const official = m.score ? m.score.us.g : null;
+          return `<tr><td>${esc(short(m))}</td><td class="n ${official !== null && logged !== official ? "warn" : ""}">${logged}</td><td class="n">${official ?? "–"}</td></tr>`;
+        }).join("")}</tbody>
+      </table>
+      <p class="note">Logged = goals players entered with their votes. Score = Grass Stains goals from the scoreboard. Red means they don't match yet (e.g. someone hasn't voted).</p>`}
+  `;
+}
+
 /* ---------- ADMIN ---------- */
 let editing = null; // id of the round whose score editor is open
 async function renderAdmin(msg) {
@@ -528,18 +648,22 @@ async function renderAdmin(msg) {
 }
 
 /* ---------- nav ---------- */
+const ADMIN_VIEWS = ["results", "bnf", "goals"];
 function syncTabs() {
-  document.querySelector('.tab[data-view="results"]').classList.toggle("hidden", !st.pin);
+  ADMIN_VIEWS.forEach(v => document.querySelector(`.tab[data-view="${v}"]`).classList.toggle("hidden", !st.pin));
+  document.querySelector("nav").classList.toggle("admin", !!st.pin);
   document.querySelector('.tab[data-view="admin"]').textContent = st.pin ? "Rounds" : "Admin";
 }
 function show(view) {
-  if (view === "results" && !st.pin) view = "admin";
+  if (ADMIN_VIEWS.includes(view) && !st.pin) view = "admin";
   st.view = view;
   syncTabs();
   document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-current", t.dataset.view === view));
-  ["vote", "results", "admin"].forEach(v => document.getElementById("view-" + v).classList.toggle("hidden", v !== view));
+  ["vote", ...ADMIN_VIEWS, "admin"].forEach(v => document.getElementById("view-" + v).classList.toggle("hidden", v !== view));
   if (view === "vote") { st.flash = null; renderVote(); }
   if (view === "results") renderResults();
+  if (view === "bnf") renderBnf();
+  if (view === "goals") renderGoals();
   if (view === "admin") renderAdmin();
 }
 syncTabs();

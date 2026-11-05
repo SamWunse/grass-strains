@@ -96,6 +96,7 @@ export default async (req) => {
     const goals = {};
     for (const p of PLAYERS) { tally[p.id] = { pts: 0, c3: 0, c2: 0, c1: 0 }; goals[p.id] = 0; }
     const votedBy = {};
+    const goalLog = []; // each player's goals per round, for the goalkicking page
     for (const p of PLAYERS) votedBy[p.id] = [];
     for (const x of subs) {
       if (tally[x.v3]) { tally[x.v3].pts += 3; tally[x.v3].c3++; }
@@ -103,10 +104,12 @@ export default async (req) => {
       if (tally[x.v1]) { tally[x.v1].pts += 1; tally[x.v1].c1++; }
       for (const v of [3, 2, 1]) if (votedBy[x["v" + v]]) votedBy[x["v" + v]].push({ voter: x.voter, v, match: x.match });
       if (goals[x.voter] !== undefined) goals[x.voter] += x.goals || 0;
+      if (IDS.has(x.voter)) goalLog.push({ player: x.voter, match: x.match, g: x.goals || 0 });
     }
     // Admin only (PIN checked above): totals plus who gave each player their votes.
     return json({
       votedBy,
+      goalLog,
       players: PLAYERS,
       matches,
       ballots: subs.length,
