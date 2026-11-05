@@ -132,6 +132,16 @@ select.big{appearance:none;-webkit-appearance:none;padding-right:44px;
 .tbl .n{text-align:right;font-family:"Graduate",serif}
 .tbl .warn{color:var(--danger)}
 
+/* Best on ground per round (names only, no vote counts) */
+.bog-round{border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 0 10px}
+.bog-round .rt{font-weight:600;margin-bottom:6px}
+.bog-round .rt small{color:var(--muted);font-weight:400}
+.bog-round ol{list-style:none;margin:0;padding:0}
+.bog-round li{display:flex;align-items:center;gap:10px;padding:4px 0}
+.bog-round .pos{font-family:"Graduate",serif;font-size:1.15rem;min-width:1.6em}
+.bog-round .pos.p1{color:var(--gold)} .bog-round .pos.p2{color:var(--silver)} .bog-round .pos.p3{color:var(--bronze)}
+.bog-round .pos.p1 + .who{font-weight:600}
+
 /* Expandable vote rows (admin): tap a player to see who voted for them */
 .board li.x{display:block;padding:0}
 .board details summary{display:flex;align-items:center;gap:12px;padding:11px 2px;cursor:pointer;list-style:none}
@@ -476,6 +486,23 @@ async function renderBnf() {
     return { p, ...d.tally[p.id], polled: perRound.length, perRound };
   }).filter(r => r.pts > 0).sort((a, b) => b.pts - a.pts || b.c3 - a.c3 || b.c2 - a.c2 || a.p.name.localeCompare(b.p.name));
   const top = rows[0];
+  // Top 3 for each round, latest round first. Ties broken by 3-vote then 2-vote counts; exact ties share a place.
+  const bogRounds = matches.slice().reverse().map(m => {
+    const t = {};
+    for (const [pid, arr] of Object.entries(d.votedBy || {}))
+      for (const x of arr) if (x.match === m.id) {
+        t[pid] ??= { pts: 0, c3: 0, c2: 0 };
+        t[pid].pts += x.v; if (x.v === 3) t[pid].c3++; if (x.v === 2) t[pid].c2++;
+      }
+    const key = r => [r.pts, r.c3, r.c2].join("/");
+    const ranked = Object.entries(t).map(([pid, r]) => ({ p: d.players.find(p => p.id === pid) || { name: pid }, ...r }))
+      .sort((a, b) => b.pts - a.pts || b.c3 - a.c3 || b.c2 - a.c2 || a.p.name.localeCompare(b.p.name));
+    ranked.forEach((r, i) => {
+      r.pos = i && key(r) === key(ranked[i - 1]) ? ranked[i - 1].pos : i + 1;
+      r.tied = ranked.some((o, j) => j !== i && key(o) === key(r));
+    });
+    return { m, top: ranked.filter(r => r.pos <= 3) };
+  }).filter(r => r.top.length);
   const voted = matches.filter(m => (d.votedBy && Object.values(d.votedBy).some(a => a.some(x => x.match === m.id))));
 
   el.innerHTML = `
@@ -496,6 +523,14 @@ async function renderBnf() {
           <span class="pts">${r.pts}</span><span class="chev" aria-hidden="true">▶</span></summary>
           <ul class="rounds">${r.perRound.map(x => `<li><span class="rt">${esc(short(x.m))}<small>${x.got.map(g => g.v + " from " + esc(nameOf(g.voter))).join(", ")}</small></span><span class="rv">${x.pts}</span></li>`).join("")}</ul>
         </details></li>`).join("")}</ol>`}
+
+    ${bogRounds.length ? `
+      <h2>Best on ground by round</h2>
+      ${bogRounds.map(r => `
+        <div class="bog-round">
+          <div class="rt">${esc(r.m.title)}${r.m.date ? ` <small>· ${new Date(r.m.date + "T00:00").toLocaleDateString(undefined, {day:"numeric", month:"short"})}</small>` : ""}</div>
+          <ol>${r.top.map(x => `<li><span class="pos p${x.pos}">${x.tied ? "=" : ""}${x.pos}</span><span class="who">${esc(x.p.name)}</span></li>`).join("")}</ol>
+        </div>`).join("")}` : ""}
   `;
 }
 
