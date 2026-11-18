@@ -112,6 +112,44 @@ select.big{appearance:none;-webkit-appearance:none;padding-right:44px;
 .board .nm{flex:1;font-weight:600}
 .board .break{font-size:.8rem;color:var(--muted);font-weight:400}
 .board .pts{font-size:1.5rem}
+/* Season pages: summary tiles and per-round breakdowns */
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0 4px}
+.tile{border:1.5px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center}
+.tile b{display:block;font-family:"Graduate",serif;font-weight:400;font-size:1.5rem;line-height:1.1}
+.tile span{font-size:.78rem;color:var(--muted)}
+.leader{border:2px solid var(--gold);border-radius:14px;padding:14px;margin:12px 0 4px;display:flex;align-items:center;gap:12px}
+.leader .lbl{font-size:.8rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.leader .who{font-weight:600;font-size:1.1rem}
+.leader .big{margin-left:auto;font-family:"Graduate",serif;font-size:2.2rem;color:var(--gold)}
+.rounds{list-style:none;margin:0 0 10px 2.4em;padding:0}
+.rounds li{display:flex !important;gap:10px;padding:6px 0 !important;border:0 !important;background:none !important;font-size:.92rem;align-items:baseline}
+.rounds .rt{flex:1}
+.rounds .rt small{display:block;color:var(--muted);font-size:.8rem}
+.rounds .rv{font-family:"Graduate",serif;font-size:1.1rem}
+.tbl{width:100%;border-collapse:collapse;font-size:.92rem}
+.tbl th{text-align:left;font-size:.78rem;color:var(--muted);font-weight:600;padding:6px 4px;border-bottom:1.5px solid var(--line)}
+.tbl td{padding:9px 4px;border-bottom:1px solid var(--line)}
+.tbl .n{text-align:right;font-family:"Graduate",serif}
+.tbl .warn{color:var(--danger)}
+
+/* Rounds page: one card per round with score, goalkickers and best on ground (names only) */
+.round-card{border:1.5px solid var(--line);border-radius:14px;padding:14px;margin:0 0 14px}
+.rc-head b{display:block;font-size:1.08rem}
+.rc-head + .score-edit{margin-top:10px}
+.rc-head span{font-size:.85rem;color:var(--muted)}
+.round-card h3{font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:16px 0 6px}
+.round-card .scoreboard{margin-top:4px}
+.kickers{display:flex;flex-wrap:wrap;gap:6px;margin:0}
+.kickers span{border:1.5px solid var(--line);border-radius:99px;padding:4px 10px;font-size:.92rem}
+.kickers b{font-family:"Graduate",serif;font-weight:400;color:var(--accent);margin-left:2px}
+.bog3{list-style:none;margin:0;padding:0}
+.bog3 li{display:flex;align-items:center;gap:10px;padding:3px 0}
+.bog3 .pos{font-family:"Graduate",serif;font-size:1.15rem;min-width:1.6em}
+.bog3 .pos.p1{color:var(--gold)} .bog3 .pos.p2{color:var(--silver)} .bog3 .pos.p3{color:var(--bronze)}
+.bog3 .pos.p1 + .who{font-weight:600}
+.rc-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.round-card .score-edit{margin-top:12px}
+
 /* Expandable vote rows (admin): tap a player to see who voted for them */
 .board li.x{display:block;padding:0}
 .board details summary{display:flex;align-items:center;gap:12px;padding:11px 2px;cursor:pointer;list-style:none}
@@ -125,16 +163,10 @@ select.big{appearance:none;-webkit-appearance:none;padding-right:44px;
 .voters .rd{margin-left:auto;color:var(--muted);font-size:.82rem;text-align:right}
 
 /* Admin */
-.match-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
-.match-row .info{flex:1}
-.match-row .info b{display:block}
-.match-row .info span{font-size:.85rem;color:var(--muted)}
 .small{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:8px 10px;font-size:.85rem;font-weight:600}
 .small.del{color:var(--danger)}
 .status{font-size:.8rem;font-weight:600;padding:1px 8px;border-radius:99px;border:1.5px solid currentColor;margin-left:6px}
 .status.open{color:var(--accent)}
-.match-row{flex-wrap:wrap}
-.match-row .scoreline{flex-basis:100%;font-size:.88rem;color:var(--muted);margin-top:-4px}
 .score-edit{flex-basis:100%;border:1.5px solid var(--line);border-radius:12px;padding:12px;margin-top:4px;background:var(--surface)}
 .score-edit label{margin-top:0}
 .sgrid{display:grid;grid-template-columns:1fr 64px 64px 52px;gap:8px;align-items:center;margin:12px 0}
@@ -156,7 +188,8 @@ select.big{appearance:none;-webkit-appearance:none;padding-right:44px;
 .record{font-family:"Graduate",serif;font-size:1.2rem}
 
 nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--navy);border-top:3px solid var(--grass);padding-bottom:env(safe-area-inset-bottom);z-index:5}
-.tab{flex:1;border:0;background:none;color:#8C9AA6;padding:15px 0 13px;font-size:.95rem;letter-spacing:.06em}
+.tab{flex:1;min-width:0;border:0;background:none;color:#8C9AA6;padding:15px 0 13px;font-size:.95rem;letter-spacing:.06em}
+nav.admin .tab{font-size:.78rem;letter-spacing:.02em;padding:15px 2px 13px}
 .tab[aria-current="true"]{color:var(--cream);box-shadow:inset 0 -4px 0 var(--grass)}
 .hidden{display:none !important}
 @media (prefers-reduced-motion: reduce){*{transition:none !important}}
@@ -228,13 +261,19 @@ nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--navy);b
 <main>
   <section id="view-vote"></section>
   <section id="view-results" class="hidden"></section>
+  <section id="view-bnf" class="hidden"></section>
+  <section id="view-goals" class="hidden"></section>
+  <section id="view-rounds" class="hidden"></section>
   <section id="view-admin" class="hidden"></section>
 </main>
 
 <nav>
   <button class="tab" data-view="vote" aria-current="true">Vote</button>
+  <button class="tab" data-view="rounds">Rounds</button>
   <button class="tab hidden" data-view="results">Results</button>
-  <button class="tab" data-view="admin">Rounds</button>
+  <button class="tab hidden" data-view="bnf">B&amp;F</button>
+  <button class="tab hidden" data-view="goals">Goals</button>
+  <button class="tab" data-view="admin">Admin</button>
 </nav>
 
 <script>
@@ -291,7 +330,7 @@ async function renderVote(reload = true) {
   }
   const open = st.matches.filter(m => m.open);
   if (!open.length) {
-    el.innerHTML = `<h2>No rounds open</h2><p class="note">Voting opens once a round is added.</p>`;
+    el.innerHTML = `<h2>No rounds open</h2><p class="note">Voting opens once the admin adds a round.</p>`;
     return;
   }
   if (st.submitted.includes(st.voter)) st.voter = "";
@@ -400,7 +439,7 @@ async function renderResults() {
     </select>
 
     <h2>Score</h2>
-    ${m ? (m.score ? scoreboard(m) : `<p class="note">No score entered yet. Add it under Rounds.</p>`)
+    ${m ? (m.score ? scoreboard(m) : `<p class="note">No score entered yet. Add it on the Rounds page.</p>`)
         : (scored.length ? `<p class="record">${rec.Won}W ${rec.Lost}L${rec.Drew ? " " + rec.Drew + "D" : ""}</p>
             <ol class="board">${scored.map(x => `<li><span class="nm">${esc(x.title)}<br><span class="break">${esc(scoreLine(x))}</span></span><span class="pts">${pts(x.score.us)}–${pts(x.score.them)}</span></li>`).join("")}</ol>`
           : `<p class="note">No scores entered yet.</p>`)}
@@ -430,83 +469,209 @@ async function renderResults() {
   el.querySelector("#rfor").onchange = e => { st.resultsFor = e.target.value; renderResults(); };
 }
 
-/* ---------- ADMIN ---------- */
-let editing = null; // id of the round whose score editor is open
-async function renderAdmin(msg) {
-  const el = document.getElementById("view-admin");
-  if (!st.pin) {
-    el.innerHTML = `<h2>Admin</h2>
-      <p class="note">Enter the admin PIN to manage rounds and see results.</p>
-      <label for="pin">Admin PIN</label>
-      <input id="pin" class="big" type="password" inputmode="numeric" autocomplete="off">
-      <div style="height:12px"></div>
-      <button class="btn" id="unlock">Unlock</button>
-      <div id="pinerr"></div>`;
-    const go = async () => {
-      const pin = el.querySelector("#pin").value;
-      try { await post({ action: "checkPin", pin }); savePin(pin); renderAdmin(); }
-      catch (err) { el.querySelector("#pinerr").innerHTML = `<div class="msg err">${esc(err.message)}</div>`; }
-    };
-    el.querySelector("#unlock").onclick = go;
-    el.querySelector("#pin").onkeydown = e => { if (e.key === "Enter") go(); };
-    return;
+/* ---------- SEASON PAGES (admin only) ---------- */
+const byDate = ms => ms.slice().sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+const short = m => m.title + (m.date ? " · " + new Date(m.date + "T00:00").toLocaleDateString(undefined, {day:"numeric", month:"short"}) : "");
+
+async function renderBnf() {
+  const el = document.getElementById("view-bnf");
+  if (!st.pin) return show("admin");
+  el.innerHTML = `<p class="note">Counting votes…</p>`;
+  let d;
+  try { d = await adminData("season"); } catch (err) { return el.innerHTML = `<div class="msg err">${esc(err.message)}</div>`; }
+  const matches = byDate(d.matches);
+  const nameOf = id => d.players.find(p => p.id === id)?.name || id;
+  const rows = d.players.map(p => {
+    const by = d.votedBy[p.id] || [];
+    const perRound = matches.map(m => {
+      const got = by.filter(x => x.match === m.id).sort((a, b) => b.v - a.v);
+      return { m, got, pts: got.reduce((n, x) => n + x.v, 0) };
+    }).filter(r => r.pts > 0);
+    return { p, ...d.tally[p.id], polled: perRound.length, perRound };
+  }).filter(r => r.pts > 0).sort((a, b) => b.pts - a.pts || b.c3 - a.c3 || b.c2 - a.c2 || a.p.name.localeCompare(b.p.name));
+  const top = rows[0];
+  const voted = matches.filter(m => (d.votedBy && Object.values(d.votedBy).some(a => a.some(x => x.match === m.id))));
+
+  el.innerHTML = `
+    <h2>Best &amp; Fairest</h2>
+    <p class="note">Season leaderboard from every round's 3-2-1 votes.</p>
+    ${!rows.length ? `<p class="note">No votes yet.</p>` : `
+      <div class="leader"><div><div class="lbl">Leading</div><div class="who">${esc(top.p.name)}</div></div><div class="big">${top.pts}</div></div>
+      <div class="tiles">
+        <div class="tile"><b>${voted.length}</b><span>rounds voted</span></div>
+        <div class="tile"><b>${d.ballots}</b><span>ballots</span></div>
+        <div class="tile"><b>${rows.length}</b><span>players polled</span></div>
+      </div>
+      <h2>Leaderboard</h2>
+      <p class="note">Tap a player for their votes round by round.</p>
+      <ol class="board">${rows.map((r, i) => `
+        <li class="x"><details><summary><span class="rank">${i + 1}</span>
+          <span class="nm">${esc(r.p.name)}<br><span class="break">${r.c3}×3, ${r.c2}×2, ${r.c1}×1 · polled in ${r.polled} round${r.polled === 1 ? "" : "s"}</span></span>
+          <span class="pts">${r.pts}</span><span class="chev" aria-hidden="true">▶</span></summary>
+          <ul class="rounds">${r.perRound.map(x => `<li><span class="rt">${esc(short(x.m))}<small>${x.got.map(g => g.v + " from " + esc(nameOf(g.voter))).join(", ")}</small></span><span class="rv">${x.pts}</span></li>`).join("")}</ul>
+        </details></li>`).join("")}</ol>`}
+
+  `;
+}
+
+async function renderGoals() {
+  const el = document.getElementById("view-goals");
+  if (!st.pin) return show("admin");
+  el.innerHTML = `<p class="note">Adding up goals…</p>`;
+  let d;
+  try { d = await adminData("season"); } catch (err) { return el.innerHTML = `<div class="msg err">${esc(err.message)}</div>`; }
+  const matches = byDate(d.matches);
+  const log = d.goalLog || [];
+  const rows = d.players.map(p => {
+    const perRound = matches.map(m => ({ m, g: log.filter(x => x.player === p.id && x.match === m.id).reduce((n, x) => n + x.g, 0) })).filter(r => r.g > 0);
+    const total = perRound.reduce((n, r) => n + r.g, 0);
+    const best = perRound.reduce((b, r) => r.g > (b?.g || 0) ? r : b, null);
+    return { p, total, perRound, best };
+  }).filter(r => r.total > 0).sort((a, b) => b.total - a.total || a.p.name.localeCompare(b.p.name));
+  const teamLogged = rows.reduce((n, r) => n + r.total, 0);
+  const roundsPlayed = matches.filter(m => m.score || log.some(x => x.match === m.id));
+  const top = rows[0];
+  const bestGame = rows.flatMap(r => r.perRound.map(x => ({ p: r.p, ...x }))).sort((a, b) => b.g - a.g)[0];
+
+  el.innerHTML = `
+    <h2>Leading Goalkicker</h2>
+    ${!rows.length ? `<p class="note">No goals logged yet.</p>` : `
+      <div class="leader"><div><div class="lbl">Leading</div><div class="who">${esc(top.p.name)}</div></div><div class="big">${top.total}</div></div>
+      <div class="tiles">
+        <div class="tile"><b>${teamLogged}</b><span>goals logged</span></div>
+        <div class="tile"><b>${rows.length}</b><span>goalkickers</span></div>
+        <div class="tile"><b>${bestGame.g}</b><span>best game<br>${esc(bestGame.p.name.split(" ")[0])}</span></div>
+      </div>
+      <h2>Leaderboard</h2>
+      <p class="note">Tap a player for their goals round by round.</p>
+      <ol class="board">${rows.map((r, i) => `
+        <li class="x"><details><summary><span class="rank">${i + 1}</span>
+          <span class="nm">${esc(r.p.name)}<br><span class="break">${r.perRound.length} game${r.perRound.length === 1 ? "" : "s"} with a goal · best ${r.best.g}</span></span>
+          <span class="pts">${r.total}</span><span class="chev" aria-hidden="true">▶</span></summary>
+          <ul class="rounds">${r.perRound.map(x => `<li><span class="rt">${esc(short(x.m))}</span><span class="rv">${x.g}</span></li>`).join("")}</ul>
+        </details></li>`).join("")}</ol>`}
+
+    <h2>Goals by round</h2>
+    ${!roundsPlayed.length ? `<p class="note">No rounds with goals or scores yet.</p>` : `
+      <table class="tbl">
+        <thead><tr><th>Round</th><th class="n">Logged</th><th class="n">Score</th></tr></thead>
+        <tbody>${roundsPlayed.map(m => {
+          const logged = log.filter(x => x.match === m.id).reduce((n, x) => n + x.g, 0);
+          const official = m.score ? m.score.us.g : null;
+          return `<tr><td>${esc(short(m))}</td><td class="n ${official !== null && logged !== official ? "warn" : ""}">${logged}</td><td class="n">${official ?? "–"}</td></tr>`;
+        }).join("")}</tbody>
+      </table>
+      <p class="note">Logged = goals players entered with their votes. Score = Grass Stains goals from the scoreboard. Red means they don't match yet (e.g. someone hasn't voted).</p>`}
+  `;
+}
+
+/* ---------- ROUNDS (everyone sees results; admin also manages) ---------- */
+let editing = null; // { id, kind: "score" | "details" } for the open editor
+const fmtDate = d => d ? new Date(d + "T00:00").toLocaleDateString(undefined, {weekday:"short", day:"numeric", month:"short"}) : "";
+
+async function renderRounds(msg) {
+  const el = document.getElementById("view-rounds");
+  if (!el.innerHTML) el.innerHTML = `<p class="note">Loading rounds…</p>`;
+  const admin = !!st.pin;
+  let d;
+  try {
+    if (admin) d = await post({ action: "rounds", pin: st.pin });
+    else { const r = await fetch(API + "?view=rounds", { cache: "no-store" }); if (!r.ok) throw new Error(); d = await r.json(); }
+  } catch (err) {
+    if (admin && /PIN/.test(err.message)) { savePin(""); return renderRounds(); }
+    return loadErr(el);
   }
-  let matches;
-  try { matches = (await adminData("season")).matches.sort((a, b) => (b.date || "").localeCompare(a.date || "")); }
-  catch (err) { return st.pin && (el.innerHTML = `<div class="msg err">${esc(err.message)}</div>`); }
+  const nameOf = id => d.players.find(p => p.id === id)?.name || id;
+  const rounds = d.rounds.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
   const today = new Date().toISOString().slice(0, 10);
   const num = (id, v) => `<input id="${id}" type="number" inputmode="numeric" min="0" max="99" step="1" value="${v ?? ""}" placeholder="0">`;
+  const isEd = (m, kind) => editing && editing.id === m.id && editing.kind === kind;
 
   el.innerHTML = `
     ${msg ? `<div class="msg err">${esc(msg)}</div>` : ""}
-    <h2>Add a round</h2>
-    <label for="mt">Round name</label>
-    <input id="mt" placeholder="Round 4 vs Eastside">
-    <label for="md">Date</label>
-    <input id="md" type="date" value="${today}">
-    <div style="height:14px"></div>
-    <button class="btn" id="add">Add round and open voting</button>
+    ${admin ? `
+      <h2>Add a round</h2>
+      <label for="mt">Round name</label>
+      <input id="mt" placeholder="Round 4 vs Eastside">
+      <label for="md">Date</label>
+      <input id="md" type="date" value="${today}">
+      <div style="height:14px"></div>
+      <button class="btn" id="add">Add round and open voting</button>` : ""}
     <h2>Rounds</h2>
-    ${matches.length ? matches.map(m => `
-      <div class="match-row">
-        <div class="info"><b>${esc(m.title)}</b><span>${m.date || ""}<span class="status ${m.open ? "open" : ""}">${m.open ? "Open" : "Closed"}</span></span></div>
-        <button class="small" data-score="${m.id}">${editing === m.id ? "Cancel" : "Score"}</button>
-        <button class="small" data-toggle="${m.id}">${m.open ? "Close" : "Reopen"}</button>
-        <button class="small del" data-del="${m.id}" aria-label="Delete ${esc(m.title)}">Delete</button>
-        <div class="scoreline">${esc(scoreLine(m))}</div>
-        ${editing === m.id ? `
-          <div class="score-edit" data-for="${m.id}">
-            <label for="opp">Opposition name</label>
-            <input id="opp" value="${esc(m.opponent || "")}" placeholder="e.g. Eastside">
-            <div class="sgrid">
-              <span class="h">Team</span><span class="h">Goals</span><span class="h">Behinds</span><span class="h">Total</span>
-              <span class="team">${OUR_TEAM}</span>${num("ug", m.score?.us.g)}${num("ub", m.score?.us.b)}<span class="tot" id="ut">0</span>
-              <span class="team" id="oppLbl">${esc(oppName(m))}</span>${num("tg", m.score?.them.g)}${num("tb", m.score?.them.b)}<span class="tot" id="tt">0</span>
-            </div>
-            <button class="btn" id="saveScore">Save score</button>
+    ${rounds.length ? rounds.map(m => `
+      <div class="round-card">
+        <div class="rc-head">
+          <b>${esc(m.title)}</b><span>${fmtDate(m.date)}<span class="status ${m.open ? "open" : ""}">${m.open ? "Voting open" : "Voting closed"}</span></span>
+        </div>
+        ${admin && isEd(m, "details") ? `
+          <div class="score-edit" data-details="${m.id}">
+            <label for="et">Round name</label>
+            <input id="et" value="${esc(m.title)}">
+            <label for="ed">Date</label>
+            <input id="ed" type="date" value="${m.date || ""}">
+            <div style="height:12px"></div>
+            <button class="btn" id="saveDetails">Save round</button>
           </div>` : ""}
-      </div>`).join("") : `<p class="note">No rounds yet. Add your first one above.</p>`}
-    <div style="height:22px"></div>
-    <button class="small" id="lock">Lock admin</button>`;
 
+        <h3>Score</h3>
+        ${m.score ? scoreboard(m) : `<p class="note">No score yet.</p>`}
+
+        <h3>Goalkickers</h3>
+        ${m.kickers.length ? `<p class="kickers">${m.kickers.map(k => `<span>${esc(nameOf(k.id))} <b>${k.g}</b></span>`).join("")}</p>` : `<p class="note">No goals logged yet.</p>`}
+
+        <h3>Best on ground</h3>
+        ${m.bog.length ? `<ol class="bog3">${m.bog.map(x => `<li><span class="pos p${x.pos}">${x.tied ? "=" : ""}${x.pos}</span><span class="who">${esc(nameOf(x.id))}</span></li>`).join("")}</ol>`
+          : `<p class="note">${m.bogPending ? "Revealed when voting closes." : "No votes yet."}</p>`}
+
+        ${admin ? `
+          <div class="rc-actions">
+            <button class="small" data-edit="${m.id}">${isEd(m, "details") ? "Cancel" : "Edit round"}</button>
+            <button class="small" data-score="${m.id}">${isEd(m, "score") ? "Cancel" : m.score ? "Edit score" : "Add score"}</button>
+            <button class="small" data-toggle="${m.id}">${m.open ? "Close voting" : "Reopen voting"}</button>
+            <button class="small del" data-del="${m.id}" aria-label="Delete ${esc(m.title)}">Delete</button>
+          </div>
+          ${isEd(m, "score") ? `
+            <div class="score-edit" data-for="${m.id}">
+              <label for="opp">Opposition name</label>
+              <input id="opp" value="${esc(m.opponent || "")}" placeholder="e.g. Eastside">
+              <div class="sgrid">
+                <span class="h">Team</span><span class="h">Goals</span><span class="h">Behinds</span><span class="h">Total</span>
+                <span class="team">${OUR_TEAM}</span>${num("ug", m.score?.us.g)}${num("ub", m.score?.us.b)}<span class="tot" id="ut">0</span>
+                <span class="team" id="oppLbl">${esc(oppName(m))}</span>${num("tg", m.score?.them.g)}${num("tb", m.score?.them.b)}<span class="tot" id="tt">0</span>
+              </div>
+              <button class="btn" id="saveScore">Save score</button>
+            </div>` : ""}` : ""}
+      </div>`).join("") : `<p class="note">No rounds yet.</p>`}
+    ${admin ? `<div style="height:8px"></div><button class="small" id="lock">Lock admin</button>` : ""}`;
+
+  if (!admin) return;
   const act = async body => {
-    try { await post({ ...body, pin: st.pin }); renderAdmin(); }
-    catch (err) { renderAdmin(err.message); }
+    try { await post({ ...body, pin: st.pin }); editing = null; renderRounds(); }
+    catch (err) { renderRounds(err.message); }
   };
+  const toggleEd = (id, kind) => { editing = isEd({ id }, kind) ? null : { id, kind }; renderRounds(); };
   el.querySelector("#add").onclick = () => {
     const title = el.querySelector("#mt").value.trim();
     if (!title) return el.querySelector("#mt").focus();
     act({ action: "addMatch", title, date: el.querySelector("#md").value });
   };
-  el.querySelectorAll("[data-score]").forEach(b => b.onclick = () => { editing = editing === b.dataset.score ? null : b.dataset.score; renderAdmin(); });
+  el.querySelectorAll("[data-edit]").forEach(b => b.onclick = () => toggleEd(b.dataset.edit, "details"));
+  el.querySelectorAll("[data-score]").forEach(b => b.onclick = () => toggleEd(b.dataset.score, "score"));
   el.querySelectorAll("[data-toggle]").forEach(b => b.onclick = () => act({ action: "toggle", id: b.dataset.toggle }));
   el.querySelectorAll("[data-del]").forEach(b => b.onclick = () => {
-    const m = matches.find(x => x.id === b.dataset.del);
+    const m = rounds.find(x => x.id === b.dataset.del);
     if (confirm(`Delete "${m.title}" and all its votes, goals and score?`)) act({ action: "delete", id: m.id });
   });
-  el.querySelector("#lock").onclick = () => { savePin(""); editing = null; show("admin"); };
+  el.querySelector("#lock").onclick = () => { savePin(""); editing = null; show("rounds"); };
 
-  const ed = el.querySelector(".score-edit");
+  const det = el.querySelector("[data-details]");
+  if (det) det.querySelector("#saveDetails").onclick = () => {
+    const title = det.querySelector("#et").value.trim();
+    if (!title) return det.querySelector("#et").focus();
+    act({ action: "editMatch", id: det.dataset.details, title, date: det.querySelector("#ed").value });
+  };
+
+  const ed = el.querySelector("[data-for]");
   if (ed) {
     const v = id => { const x = ed.querySelector("#" + id).value.trim(); return x === "" ? 0 : Number(x); };
     const totals = () => {
@@ -516,30 +681,50 @@ async function renderAdmin(msg) {
     };
     ed.querySelectorAll("input").forEach(i => i.oninput = totals);
     totals();
-    ed.querySelector("#saveScore").onclick = async () => {
-      const id = ed.dataset.for;
-      try {
-        await post({ action: "score", pin: st.pin, id, opponent: ed.querySelector("#opp").value,
-          us: { g: v("ug"), b: v("ub") }, them: { g: v("tg"), b: v("tb") } });
-        editing = null; renderAdmin();
-      } catch (err) { renderAdmin(err.message); }
-    };
+    ed.querySelector("#saveScore").onclick = () => act({ action: "score", id: ed.dataset.for, opponent: ed.querySelector("#opp").value,
+      us: { g: v("ug"), b: v("ub") }, them: { g: v("tg"), b: v("tb") } });
   }
 }
 
+/* ---------- ADMIN unlock ---------- */
+function renderAdmin() {
+  const el = document.getElementById("view-admin");
+  if (st.pin) return show("rounds");
+  el.innerHTML = `<h2>Admin</h2>
+    <p class="note">Enter the admin PIN to add and edit rounds and see results.</p>
+    <label for="pin">Admin PIN</label>
+    <input id="pin" class="big" type="password" inputmode="numeric" autocomplete="off">
+    <div style="height:12px"></div>
+    <button class="btn" id="unlock">Unlock</button>
+    <div id="pinerr"></div>`;
+  const go = async () => {
+    const pin = el.querySelector("#pin").value;
+    try { await post({ action: "checkPin", pin }); savePin(pin); show("rounds"); }
+    catch (err) { el.querySelector("#pinerr").innerHTML = `<div class="msg err">${esc(err.message)}</div>`; }
+  };
+  el.querySelector("#unlock").onclick = go;
+  el.querySelector("#pin").onkeydown = e => { if (e.key === "Enter") go(); };
+}
+
 /* ---------- nav ---------- */
+const ADMIN_VIEWS = ["results", "bnf", "goals"];
 function syncTabs() {
-  document.querySelector('.tab[data-view="results"]').classList.toggle("hidden", !st.pin);
-  document.querySelector('.tab[data-view="admin"]').textContent = st.pin ? "Rounds" : "Admin";
+  ADMIN_VIEWS.forEach(v => document.querySelector(`.tab[data-view="${v}"]`).classList.toggle("hidden", !st.pin));
+  document.querySelector('.tab[data-view="admin"]').classList.toggle("hidden", !!st.pin);
+  document.querySelector("nav").classList.toggle("admin", !!st.pin);
 }
 function show(view) {
-  if (view === "results" && !st.pin) view = "admin";
+  if (ADMIN_VIEWS.includes(view) && !st.pin) view = "admin";
+  if (view === "admin" && st.pin) view = "rounds";
   st.view = view;
   syncTabs();
   document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-current", t.dataset.view === view));
-  ["vote", "results", "admin"].forEach(v => document.getElementById("view-" + v).classList.toggle("hidden", v !== view));
+  ["vote", "rounds", ...ADMIN_VIEWS, "admin"].forEach(v => document.getElementById("view-" + v).classList.toggle("hidden", v !== view));
   if (view === "vote") { st.flash = null; renderVote(); }
+  if (view === "rounds") renderRounds();
   if (view === "results") renderResults();
+  if (view === "bnf") renderBnf();
+  if (view === "goals") renderGoals();
   if (view === "admin") renderAdmin();
 }
 syncTabs();
