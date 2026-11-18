@@ -91,6 +91,12 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
 .msg.err{border-color:var(--danger);color:var(--danger)}
 .msg.ok{border-color:var(--grass);border-left-width:6px}
 
+/* Add a new player from the name menu */
+.add-player{border:1.5px solid var(--line);border-radius:12px;padding:12px;margin-top:10px;background:var(--surface)}
+.add-player label{margin-top:0}
+.add-actions{display:flex;gap:10px;align-items:center;margin-top:12px}
+.add-actions .btn{flex:1}
+
 /* Vote form: one big input per row */
 .big{font-size:1.15rem;padding:16px 14px;min-height:58px;border-radius:12px}
 select.big{appearance:none;-webkit-appearance:none;padding-right:44px;
@@ -149,6 +155,8 @@ select.big{appearance:none;-webkit-appearance:none;padding-right:44px;
 .bog3 .pos.p1 + .who{font-weight:600}
 .rc-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
 .round-card .score-edit{margin-top:12px}
+.added-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.added-row span{flex:1;font-weight:500}
 
 /* Expandable vote rows (admin): tap a player to see who voted for them */
 .board li.x{display:block;padding:0}
@@ -283,6 +291,7 @@ const st = {
   players: [], matches: [], submitted: [],
   matchId: "", voter: "", goals: 0, picks: {3:null,2:null,1:null},
   flash: null, pin: "", resultsFor: "season", view: "vote",
+  adding: false, newName: "", addErr: "",
 };
 try { st.pin = sessionStorage.getItem("bogPin") || ""; } catch {}
 const savePin = pin => { st.pin = pin; try { pin ? sessionStorage.setItem("bogPin", pin) : sessionStorage.removeItem("bogPin"); } catch {} syncTabs(); };
@@ -349,7 +358,18 @@ async function renderVote(reload = true) {
         const done = st.submitted.includes(p.id);
         return `<option value="${p.id}" ${p.id === st.voter ? "selected" : ""} ${done ? "disabled" : ""}>${esc(p.name)}${done ? " (submitted)" : ""}</option>`;
       }).join("")}
+      <option value="__new" ${st.adding ? "selected" : ""}>+ Add new player</option>
     </select>
+    ${st.adding ? `
+      <div class="add-player">
+        <label for="newName">New player's name</label>
+        <input id="newName" class="big" value="${esc(st.newName)}" placeholder="First and last name" autocomplete="off" maxlength="40">
+        ${st.addErr ? `<div class="msg err">${esc(st.addErr)}</div>` : ""}
+        <div class="add-actions">
+          <button class="btn" id="addMe">Add player</button>
+          <button class="small" id="addCancel">Cancel</button>
+        </div>
+      </div>` : ""}
 
     ${[3,2,1].map(v => `
       <label for="v${v}" class="vote-label" data-v="${v}"><span class="vv">${v}</span> ${v === 1 ? "vote" : "votes"}</label>
@@ -372,10 +392,32 @@ async function renderVote(reload = true) {
 
   el.querySelector("#match").onchange = async e => { st.matchId = e.target.value; st.flash = null; reset(); renderVote(); };
   el.querySelector("#voter").onchange = e => {
-    st.voter = e.target.value; st.flash = null;
+    st.flash = null; st.addErr = "";
+    if (e.target.value === "__new") { st.adding = true; st.voter = ""; renderVote(false); el.querySelector("#newName").focus(); return; }
+    st.adding = false;
+    st.voter = e.target.value;
     [3,2,1].forEach(v => { if (st.picks[v] === st.voter) st.picks[v] = null; });
     renderVote(false);
   };
+  if (st.adding) {
+    const input = el.querySelector("#newName");
+    input.oninput = () => { st.newName = input.value; st.addErr = ""; el.querySelector(".add-player .msg.err")?.remove(); };
+    const addMe = async () => {
+      const name = input.value.trim();
+      if (!name) return input.focus();
+      const btn = el.querySelector("#addMe"); btn.disabled = true; btn.textContent = "Adding…";
+      try {
+        const r = await post({ action: "addPlayer", name });
+        st.adding = false; st.newName = ""; st.addErr = "";
+        st.voter = r.player.id;
+        st.flash = { ok: true, text: `${r.player.name} added. You can vote now.` };
+        renderVote();
+      } catch (err) { st.addErr = err.message; renderVote(false); }
+    };
+    el.querySelector("#addMe").onclick = addMe;
+    input.onkeydown = e => { if (e.key === "Enter") addMe(); };
+    el.querySelector("#addCancel").onclick = () => { st.adding = false; st.newName = ""; st.addErr = ""; renderVote(false); };
+  }
   el.querySelectorAll("select[data-v]").forEach(sel => sel.onchange = () => {
     st.picks[+sel.dataset.v] = sel.value || null; renderVote(false);
   });
@@ -642,7 +684,14 @@ async function renderRounds(msg) {
               <button class="btn" id="saveScore">Save score</button>
             </div>` : ""}` : ""}
       </div>`).join("") : `<p class="note">No rounds yet.</p>`}
-    ${admin ? `<div style="height:8px"></div><button class="small" id="lock">Lock admin</button>` : ""}`;
+    ${admin ? `
+      <h2>Added players</h2>
+      ${d.players.some(p => p.added) ? `
+        <p class="note">Players added from the Vote screen. Remove typos or duplicates here.</p>
+        ${d.players.filter(p => p.added).map(p => `
+          <div class="added-row"><span>${esc(p.name)}</span><button class="small del" data-rmp="${p.id}" aria-label="Remove ${esc(p.name)}">Remove</button></div>`).join("")}`
+        : `<p class="note">No one has been added from the Vote screen yet.</p>`}
+      <div style="height:18px"></div><button class="small" id="lock">Lock admin</button>` : ""}`;
 
   if (!admin) return;
   const act = async body => {
@@ -661,6 +710,10 @@ async function renderRounds(msg) {
   el.querySelectorAll("[data-del]").forEach(b => b.onclick = () => {
     const m = rounds.find(x => x.id === b.dataset.del);
     if (confirm(`Delete "${m.title}" and all its votes, goals and score?`)) act({ action: "delete", id: m.id });
+  });
+  el.querySelectorAll("[data-rmp]").forEach(b => b.onclick = () => {
+    const p = d.players.find(x => x.id === b.dataset.rmp);
+    if (confirm(`Remove ${p.name} from the player list? Any votes they gave or got will no longer count.`)) act({ action: "removePlayer", id: p.id });
   });
   el.querySelector("#lock").onclick = () => { savePin(""); editing = null; show("rounds"); };
 
