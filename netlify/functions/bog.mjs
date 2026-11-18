@@ -1,7 +1,7 @@
 import { getStore } from "@netlify/blobs";
 
 /* ============ EDIT YOUR SQUAD HERE ============ */
-const PLAYERS = [
+const BASE_PLAYERS = [
   { id: "adam-coulter", name: "Adam Coulter" },
   { id: "brett", name: "Brett" },
   { id: "dug", name: "Dug" },
@@ -22,11 +22,10 @@ const PLAYERS = [
   { id: "timmy-willick", name: "Timmy Willick" },
   { id: "tony-evans", name: "Tony Evans" },
 ];
-/* Optional: add num: 7 to show a jersey number instead of initials */
+/* Players can also add themselves from the Vote screen; those are stored, not listed here. */
 /* Admin PIN is set in Netlify: Site configuration > Environment variables > ADMIN_PIN */
 /* ============================================== */
 
-const IDS = new Set(PLAYERS.map(p => p.id));
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), {
     status,
@@ -35,6 +34,16 @@ const json = (data, status = 200) =>
 const store = () => getStore({ name: "bog", consistency: "strong" });
 const getMatches = async s => (await s.get("matches", { type: "json" })) || [];
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+// Squad = the players listed above plus any added from the app (stored under "addedPlayers").
+const MAX_ADDED = 60;
+const getAdded = async s => (await s.get("addedPlayers", { type: "json" })) || [];
+async function getPlayers(s) {
+  const added = (await getAdded(s)).map(p => ({ id: p.id, name: p.name, added: true }));
+  return [...BASE_PLAYERS, ...added].sort((a, b) => a.name.localeCompare(b.name));
+}
+const slug = name => name.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
+  .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "player";
 
 async function getSubs(s, matchId) {
   const { blobs } = await s.list({ prefix: `sub/${matchId}/` });
@@ -46,7 +55,7 @@ async function getSubs(s, matchId) {
 // best on ground top 3 as names and places only (never vote counts or ballots).
 // Ties are broken by 3-vote then 2-vote counts; exact ties share a place.
 // Players only see a round's top 3 once its voting is closed; the admin always sees it.
-function summarise(m, subs, isAdmin) {
+function summarise(m, subs, isAdmin, IDS) {
   const t = {};
   const kick = {};
   for (const x of subs) {
@@ -72,12 +81,14 @@ function summarise(m, subs, isAdmin) {
     bogPending: m.open && !isAdmin && bog.length > 0,
   };
 }
-async function roundsSummary(s, matches, isAdmin) {
-  return Promise.all(matches.map(async m => summarise(m, await getSubs(s, m.id), isAdmin)));
+async function roundsSummary(s, matches, isAdmin, IDS) {
+  return Promise.all(matches.map(async m => summarise(m, await getSubs(s, m.id), isAdmin, IDS)));
 }
 
 export default async (req) => {
   const s = store();
+  const PLAYERS = await getPlayers(s);
+  const IDS = new Set(PLAYERS.map(p => p.id));
 
   if (req.method === "GET") {
     // Public data: the Vote screen's rounds and who has voted, or (view=rounds) the
@@ -86,7 +97,7 @@ export default async (req) => {
     const which = url.searchParams.get("match");
     const matches = await getMatches(s);
     if (url.searchParams.get("view") === "rounds")
-      return json({ players: PLAYERS, rounds: await roundsSummary(s, matches, false) });
+      return json({ players: PLAYERS, rounds: await roundsSummary(s, matches, false, IDS) });
     const submitted = which ? (await getSubs(s, which)).map(x => x.voter) : [];
     return json({
       players: PLAYERS,
@@ -118,6 +129,21 @@ export default async (req) => {
     return json({ ok: true });
   }
 
+  if (body.action === "addPlayer") {
+    const name = String(body.name || "").replace(/\s+/g, " ").trim();
+    if (!/^\p{L}[\p{L}\p{M} .'()\-]{1,39}$/u.test(name))
+      return json({ error: "Enter a name of 2 to 40 letters (spaces, hyphens, apostrophes and brackets are fine)." }, 400);
+    const existing = PLAYERS.find(p => p.name.toLowerCase() === name.toLowerCase());
+    if (existing) return json({ error: `${existing.name} is already on the list.` }, 409);
+    const added = await getAdded(s);
+    if (added.length >= MAX_ADDED) return json({ error: "The player list is full. Ask the admin to tidy it up." }, 400);
+    let id = slug(name), n = 2;
+    while (IDS.has(id)) id = `${slug(name)}-${n++}`;
+    added.push({ id, name, at: new Date().toISOString() });
+    await s.setJSON("addedPlayers", added);
+    return json({ ok: true, player: { id, name } });
+  }
+
   // Admin actions
   const pin = (globalThis.Netlify?.env?.get("ADMIN_PIN")) || process.env.ADMIN_PIN;
   if (!pin) return json({ error: "ADMIN_PIN isn't set in Netlify environment variables." }, 500);
@@ -125,7 +151,14 @@ export default async (req) => {
 
   if (body.action === "checkPin") return json({ ok: true });
 
-  if (body.action === "rounds") return json({ players: PLAYERS, rounds: await roundsSummary(s, matches, true) });
+  if (body.action === "rounds") return json({ players: PLAYERS, rounds: await roundsSummary(s, matches, true, IDS) });
+
+  if (body.action === "removePlayer") {
+    const added = await getAdded(s);
+    if (!added.some(p => p.id === body.id)) return json({ error: "Only players added from the app can be removed here." }, 400);
+    await s.setJSON("addedPlayers", added.filter(p => p.id !== body.id));
+    return json({ ok: true });
+  }
 
   if (body.action === "editMatch") {
     const m = matches.find(x => x.id === body.id);
