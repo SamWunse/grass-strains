@@ -436,11 +436,41 @@ async function renderVote(reload = true) {
       renderVote(); scrollTo(0, 0);
     } catch (err) {
       st.flash = { ok: false, text: err.message };
+      await refreshPlayers();
       renderVote(false); scrollTo(0, 0);
     }
   };
 }
 function reset() { st.picks = {3:null,2:null,1:null}; st.goals = 0; }
+
+/* Keep the name lists current on phones that already have the page open, so a
+   player added on someone else's phone can be picked for votes without a reload. */
+const playersSig = ps => ps.map(p => p.id + ":" + p.name).join("|");
+async function refreshPlayers() {
+  try {
+    const r = await fetch(API, { cache: "no-store" });
+    if (!r.ok) return false;
+    const d = await r.json();
+    if (playersSig(d.players) === playersSig(st.players)) return false;
+    st.players = d.players;
+    const ids = new Set(d.players.map(p => p.id));
+    if (st.voter && !ids.has(st.voter)) st.voter = "";
+    [3,2,1].forEach(v => { if (st.picks[v] && !ids.has(st.picks[v])) st.picks[v] = null; });
+    return true;
+  } catch { return false; }
+}
+let namesStale = false;
+async function refreshVoteNames() {
+  if (st.view !== "vote" || document.hidden) return;
+  if (await refreshPlayers()) namesStale = true;
+  // Don't redraw under someone's finger: wait while a menu or box on the Vote screen is in use.
+  const a = document.activeElement;
+  const busy = st.adding || (a && a.closest && a.closest("#view-vote") && /^(SELECT|INPUT)$/.test(a.tagName));
+  if (namesStale && !busy) { namesStale = false; renderVote(false); }
+}
+setInterval(refreshVoteNames, 20000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshVoteNames(); });
+window.addEventListener("focus", refreshVoteNames);
 
 /* ---------- RESULTS (admin only) ---------- */
 function scoreboard(m) {
