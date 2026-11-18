@@ -45,7 +45,8 @@ async function getSubs(s, matchId) {
 // Per-round summary for the Rounds page: score, goalkickers with goals, and the
 // best on ground top 3 as names and places only (never vote counts or ballots).
 // Ties are broken by 3-vote then 2-vote counts; exact ties share a place.
-function summarise(m, subs) {
+// Players only see a round's top 3 once its voting is closed; the admin always sees it.
+function summarise(m, subs, isAdmin) {
   const t = {};
   const kick = {};
   for (const x of subs) {
@@ -67,11 +68,12 @@ function summarise(m, subs) {
     id: m.id, title: m.title, date: m.date, open: m.open,
     opponent: m.opponent || "", score: m.score || null,
     kickers: Object.entries(kick).map(([id, g]) => ({ id, g })).sort((a, b) => b.g - a.g),
-    bog,
+    bog: m.open && !isAdmin ? [] : bog,
+    bogPending: m.open && !isAdmin && bog.length > 0,
   };
 }
-async function roundsSummary(s, matches) {
-  return Promise.all(matches.map(async m => summarise(m, await getSubs(s, m.id))));
+async function roundsSummary(s, matches, isAdmin) {
+  return Promise.all(matches.map(async m => summarise(m, await getSubs(s, m.id), isAdmin)));
 }
 
 export default async (req) => {
@@ -84,7 +86,7 @@ export default async (req) => {
     const which = url.searchParams.get("match");
     const matches = await getMatches(s);
     if (url.searchParams.get("view") === "rounds")
-      return json({ players: PLAYERS, rounds: await roundsSummary(s, matches) });
+      return json({ players: PLAYERS, rounds: await roundsSummary(s, matches, false) });
     const submitted = which ? (await getSubs(s, which)).map(x => x.voter) : [];
     return json({
       players: PLAYERS,
@@ -123,7 +125,7 @@ export default async (req) => {
 
   if (body.action === "checkPin") return json({ ok: true });
 
-  if (body.action === "rounds") return json({ players: PLAYERS, rounds: await roundsSummary(s, matches) });
+  if (body.action === "rounds") return json({ players: PLAYERS, rounds: await roundsSummary(s, matches, true) });
 
   if (body.action === "editMatch") {
     const m = matches.find(x => x.id === body.id);
